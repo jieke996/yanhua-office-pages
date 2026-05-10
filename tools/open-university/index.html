@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>国开专业查询</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero-panel">
+      <p class="eyebrow">Open University</p>
+      <h1><i class="fas fa-university"></i> 国开专业查询</h1>
+      <p class="hero-copy">2026 春季内蒙古开放大学专业、层次、学制与学费查询。</p>
+    </section>
+
+    <section class="stats-grid" aria-label="统计信息">
+      <article class="stat-card stat-blue">
+        <strong id="count-specialty">0</strong>
+        <span>高起专专业</span>
+      </article>
+      <article class="stat-card stat-green">
+        <strong id="count-undergrad">0</strong>
+        <span>专升本专业</span>
+      </article>
+      <article class="stat-card stat-amber">
+        <strong id="count-highstart">0</strong>
+        <span>高起本专业</span>
+      </article>
+      <article class="stat-card stat-indigo">
+        <strong id="count-result">0</strong>
+        <span>查询结果</span>
+      </article>
+    </section>
+
+    <section class="query-panel">
+      <div class="tabs" role="tablist">
+        <button class="tab-btn active" type="button" id="tab-all" onclick="switchLevel('all')"><i class="fas fa-list"></i> 全部</button>
+        <button class="tab-btn" type="button" id="tab-高起专" onclick="switchLevel('高起专')"><i class="fas fa-graduation-cap"></i> 高起专</button>
+        <button class="tab-btn" type="button" id="tab-专升本" onclick="switchLevel('专升本')"><i class="fas fa-user-graduate"></i> 专升本</button>
+        <button class="tab-btn" type="button" id="tab-高起本" onclick="switchLevel('高起本')"><i class="fas fa-rocket"></i> 高起本</button>
+      </div>
+
+      <label class="search-field" for="searchInput">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="输入专业名称搜索，例如：汉语言、护理、计算机">
+      </label>
+
+      <div class="actions-row">
+        <button class="btn btn-primary" type="button" onclick="search()"><i class="fas fa-search"></i> 查询</button>
+        <button class="btn btn-ghost" type="button" onclick="clearSearch()"><i class="fas fa-redo"></i> 清空</button>
+        <button class="btn btn-success" type="button" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> 导出Excel</button>
+        <button class="btn btn-image" type="button" onclick="exportToImage()"><i class="fas fa-image"></i> 导出图片</button>
+      </div>
+    </section>
+
+    <section id="results" class="results-panel">
+      <div class="results-head">
+        <h2><i class="fas fa-table"></i> 查询结果</h2>
+        <span id="resultCount">共 0 条记录</span>
+      </div>
+      <div id="resultsContainer" class="results-container">
+        <div class="empty-state">
+          <i class="fas fa-search"></i>
+          <p>请输入专业名称或选择层次进行查询</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="page-note">
+      <p>数据来源：内蒙古开放大学官网 · 2026 年春季招生简章</p>
+      <p>注：学费为全程总费用，学制以官方公布为准</p>
+    </footer>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

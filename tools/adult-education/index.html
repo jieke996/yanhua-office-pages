@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>吉林成人高考院校专业查询系统</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero-panel">
+      <div>
+        <p class="eyebrow">Yanhua Education</p>
+        <h1><i class="fas fa-graduation-cap"></i> 吉林成人高考院校专业查询系统</h1>
+        <p class="hero-copy">快速查询院校、专业、层次、学习形式及收费标准。</p>
+      </div>
+    </section>
+
+    <section class="stats-grid" aria-label="统计信息">
+      <article class="stat-card">
+        <strong id="totalSchools">0</strong>
+        <span>招生院校</span>
+      </article>
+      <article class="stat-card">
+        <strong id="totalMajors">0</strong>
+        <span>招生专业</span>
+      </article>
+      <article class="stat-card">
+        <strong id="totalPrograms">0</strong>
+        <span>招生项目</span>
+      </article>
+      <article class="stat-card">
+        <strong id="filteredCount">0</strong>
+        <span>查询结果</span>
+      </article>
+    </section>
+
+    <section class="query-panel">
+      <div class="tabs" role="tablist">
+        <button class="tab-btn active" id="tab-major" type="button" onclick="switchTab('major')">
+          <i class="fas fa-search"></i> 按专业查询
+        </button>
+        <button class="tab-btn" id="tab-school" type="button" onclick="switchTab('school')">
+          <i class="fas fa-university"></i> 按学校查询
+        </button>
+      </div>
+
+      <div id="search-by-major" class="search-panel">
+        <div class="form-grid form-grid-major">
+          <label class="field">
+            <span><em>*</em> 学历层次</span>
+            <select id="level-major" onchange="updateSchools('major')">
+              <option value="">全部层次</option>
+              <option value="高起专">高起专</option>
+              <option value="专升本">专升本</option>
+              <option value="高起本">高起本</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>招生院校</span>
+            <select id="school-major">
+              <option value="">全部院校</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>科类</span>
+            <select id="category-major">
+              <option value="">全部科类</option>
+            </select>
+          </label>
+          <label class="field">
+            <span><em>*</em> 专业名称</span>
+            <input type="text" id="keyword-major" placeholder="输入专业名称，例如：会计">
+          </label>
+        </div>
+      </div>
+
+      <div id="search-by-school" class="search-panel hidden">
+        <div class="form-grid form-grid-school">
+          <label class="field">
+            <span><em>*</em> 招生院校</span>
+            <select id="school-select">
+              <option value="">选择院校</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>学历层次</span>
+            <select id="level-school">
+              <option value="">全部层次</option>
+              <option value="高起专">高起专</option>
+              <option value="专升本">专升本</option>
+              <option value="高起本">高起本</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>专业搜索</span>
+            <input type="text" id="keyword-school" placeholder="输入专业名称，例如：护理">
+          </label>
+        </div>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn btn-primary" type="button" onclick="search()"><i class="fas fa-search"></i> 查询</button>
+        <button class="btn btn-ghost" type="button" onclick="clearSearch()"><i class="fas fa-redo"></i> 清除</button>
+        <button class="btn btn-success" type="button" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> 导出Excel</button>
+        <button class="btn btn-image" type="button" onclick="exportToImage()"><i class="fas fa-image"></i> 导出图片</button>
+      </div>
+    </section>
+
+    <section id="results" class="results-panel">
+      <div class="results-head">
+        <h2><i class="fas fa-list"></i> 查询结果</h2>
+        <span id="result-count">共 0 条记录</span>
+      </div>
+      <div id="results-content" class="results-content">
+        <div class="empty-state">
+          <i class="fas fa-search"></i>
+          <p>请输入查询条件进行搜索</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

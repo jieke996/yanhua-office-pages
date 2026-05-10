@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>言华教育 · 海滨系统登录</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", Roboto, sans-serif; }
+        body, html { height: 100%; overflow: hidden; }
+        
+        .video-bg { 
+            position: absolute; top: 50%; left: 50%; 
+            min-width: 100%; min-height: 100%; 
+            width: auto; height: auto; 
+            transform: translate(-50%, -50%); 
+            z-index: -1; object-fit: cover; 
+        }
+        
+        .container { 
+            display: flex; 
+            justify-content: flex-end; 
+            align-items: center; 
+            height: 100%; 
+            padding-right: 12%; 
+        }
+        
+        .login-card { 
+            position: relative; 
+            width: 380px; 
+            background: rgba(255, 255, 255, 0.45); 
+            backdrop-filter: blur(20px) saturate(150%); 
+            -webkit-backdrop-filter: blur(20px) saturate(150%); 
+            border-radius: 24px; 
+            padding: 45px 40px; 
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15); 
+            border: 1px solid rgba(255, 255, 255, 0.5); 
+        }
+        
+        .brand {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .brand-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a1a;
+            letter-spacing: 2px;
+        }
+        
+        .brand-sub {
+            font-size: 12px;
+            color: rgba(0,0,0,0.4);
+            margin-top: 4px;
+            letter-spacing: 1px;
+        }
+        
+        .login-card h2 { 
+            text-align: center; 
+            color: #333; 
+            margin-bottom: 30px; 
+            font-weight: 500; 
+            font-size: 16px;
+        }
+        
+        .input-group { margin-bottom: 20px; }
+        
+        .input-group input { 
+            width: 100%; 
+            padding: 14px 16px; 
+            border-radius: 14px; 
+            border: 1.5px solid rgba(255, 255, 255, 0.8); 
+            background: rgba(255, 255, 255, 0.7); 
+            font-size: 15px; 
+            color: #333; 
+            transition: all 0.3s ease; 
+        }
+        
+        .input-group input:focus { 
+            outline: none; 
+            border-color: #1677FF; 
+            background: #fff; 
+            box-shadow: 0 0 0 4px rgba(22, 119, 255, 0.12); 
+        }
+        
+        .login-btn { 
+            width: 100%; 
+            padding: 15px; 
+            border-radius: 16px; 
+            border: none; 
+            background: linear-gradient(135deg, #1677FF 0%, #4096FF 100%); 
+            color: white; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            box-shadow: 0 8px 20px rgba(22, 119, 255, 0.35); 
+            transition: all 0.2s ease; 
+            margin-top: 10px; 
+        }
+        
+        .login-btn:active { transform: scale(0.96); box-shadow: 0 4px 10px rgba(22, 119, 255, 0.25); }
+        .login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .remember-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: -4px 0 8px;
+            color: rgba(0, 0, 0, 0.62);
+            font-size: 13px;
+        }
+
+        .remember-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .remember-label input {
+            width: 16px;
+            height: 16px;
+            accent-color: #1677FF;
+            cursor: pointer;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 9999;
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.error { background: rgba(220, 38, 38, 0.85); }
+        .toast.success { background: rgba(22, 119, 255, 0.85); }
+        
+        .links { display: flex; justify-content: space-between; margin-top: 25px; display: none; }
+        .links a { color: #007AFF; text-decoration: none; font-size: 14px; font-weight: 500; transition: opacity 0.2s; }
+        .links a:hover { opacity: 0.7; }
+        
+        .mute-btn { 
+            position: absolute; top: 20px; right: 20px; 
+            width: 36px; height: 36px; 
+            border-radius: 50%; 
+            background: rgba(255, 255, 255, 0.5); 
+            border: 1px solid rgba(255, 255, 255, 0.8); 
+            display: flex; justify-content: center; align-items: center; 
+            cursor: pointer; 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); 
+            transition: all 0.3s ease; 
+            color: #333; 
+        }
+        .mute-btn:hover { background: rgba(255, 255, 255, 0.8); transform: scale(1.05); }
+        .mute-btn svg { width: 18px; height: 18px; }
+        
+        @media screen and (max-width: 768px) {
+            .container { justify-content: center; padding-right: 0; padding: 20px; }
+            .login-card { width: 100%; max-width: 380px; padding: 40px 30px; }
+        }
+        @media screen and (max-width: 480px) {
+            .container { align-items: flex-end; padding-bottom: 40px; padding: 15px; }
+            .login-card { padding: 35px 25px; border-radius: 20px; }
+            .login-card h2 { margin-bottom: 25px; font-size: 16px; }
+            .input-group input { padding: 16px 14px; font-size: 16px; }
+            .remember-row { margin-top: -2px; font-size: 14px; }
+            .login-btn { padding: 18px 16px; font-size: 17px; margin-top: 15px; }
+            .links { margin-top: 20px; }
+            .mute-btn { top: 15px; right: 15px; width: 32px; height: 32px; }
+        }
+    </style>
+</head>
+<body>
+    <video id="bg-video" autoplay loop muted playsinline class="video-bg">
+        <source src="assets/bg.mp4" type="video/mp4">
+    </video>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="container">
+        <div class="login-card">
+            <button class="mute-btn" id="mute-btn" onclick="toggleMute()" title="静音/取消静音">
+                <svg id="icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <line x1="23" y1="9" x2="17" y2="15"></line>
+                    <line x1="17" y1="9" x2="23" y2="15"></line>
+                </svg>
+                <svg id="icon-unmuted" style="display: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+            </button>
+
+            <div class="brand">
+                <div class="brand-name">言华教育</div>
+                <div class="brand-sub">YANHUA EDUCATION</div>
+            </div>
+            
+            <h2>海滨系统登录</h2>
+            
+            <form id="loginForm">
+                <div class="input-group">
+                    <input type="text" id="login-username" placeholder="账号" required autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="login-password" placeholder="密码" required>
+                </div>
+                <div class="remember-row">
+                    <label class="remember-label">
+                        <input type="checkbox" id="rememberPassword">
+                        <span>记住密码</span>
+                    </label>
+                </div>
+                <button type="submit" class="login-btn" id="loginBtn">登 录</button>
+            </form>
+
+            <div class="links">
+                <a href="forgot.html">忘记密码？</a>
+                <a href="register.html">注册账号</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        const API_BASE = window.YANHUA_API_BASE || (location.protocol === 'file:' ? 'http://localhost:8080' : '');
+        const REMEMBER_KEY = 'yanhua_remember_login';
+
+        function saveRememberedLogin(username, password) {
+            localStorage.setItem(REMEMBER_KEY, JSON.stringify({ username, password }));
+        }
+
+        function clearRememberedLogin() {
+            localStorage.removeItem(REMEMBER_KEY);
+        }
+
+        function fillRememberedLogin() {
+            const saved = localStorage.getItem(REMEMBER_KEY);
+            if (!saved) return;
+
+            try {
+                const data = JSON.parse(saved);
+                if (!data || !data.username || !data.password) return;
+                document.getElementById('login-username').value = data.username;
+                document.getElementById('login-password').value = data.password;
+                document.getElementById('rememberPassword').checked = true;
+            } catch(e) {
+                clearRememberedLogin();
+            }
+        }
+
+        function toggleMute() {
+            const video = document.getElementById('bg-video');
+            const iconMuted = document.getElementById('icon-muted');
+            const iconUnmuted = document.getElementById('icon-unmuted');
+            if (video.muted) {
+                video.muted = false; iconMuted.style.display = 'none'; iconUnmuted.style.display = 'block';
+            } else {
+                video.muted = true; iconMuted.style.display = 'block'; iconUnmuted.style.display = 'none';
+            }
+        }
+
+        function showToast(msg, type = 'error') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = 'toast ' + type;
+            requestAnimationFrame(() => { toast.classList.add('show'); });
+            setTimeout(() => { toast.classList.remove('show'); }, 2500);
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            const btn = document.getElementById('loginBtn');
+
+            if (!username || !password) {
+                showToast('请输入账号和密码');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '登录中...';
+
+            try {
+                const response = await fetch(API_BASE + '/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    if (document.getElementById('rememberPassword').checked) {
+                        saveRememberedLogin(username, password);
+                    } else {
+                        clearRememberedLogin();
+                    }
+                    // 保存登录态
+                    localStorage.setItem('yanhua_user', JSON.stringify(result.user));
+                    showToast('登录成功，即将跳转...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'home.html';
+                    }, 800);
+                } else {
+                    showToast(result.message || '登录失败');
+                }
+            } catch (error) {
+                showToast('网络连接失败，请检查后端服务');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '登 录';
+            }
+        });
+
+        // 回车提交
+        document.getElementById('login-password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+        });
+
+        // 如果已登录，直接跳转
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('yanhua_user');
+            if (savedUser) {
+                try {
+                    const user = JSON.parse(savedUser);
+                    if (user && user.id) {
+                        window.location.href = 'home.html';
+                    }
+                } catch(e) {}
+            }
+            fillRememberedLogin();
+        });
+    </script>
+</body>
+</html>

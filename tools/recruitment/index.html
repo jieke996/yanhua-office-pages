@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通辽招录信息查询</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="title-block">
+        <h1>通辽招录信息查询</h1>
+        <p>汇总通辽地区公务员、事业单位、教师、医疗、国企等招录公告</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn secondary" type="button" onclick="loadJobs()">刷新</button>
+        <a class="btn" id="adminLink" href="admin.html" style="display:none;">进入管理</a>
+      </div>
+    </header>
+
+    <section class="panel filter-panel">
+      <div class="filter-grid">
+        <div class="field">
+          <label for="keyword">关键词</label>
+          <input id="keyword" type="search" placeholder="搜索标题、学历、年龄、来源、备注">
+        </div>
+        <div class="field">
+          <label for="sortBy">排序</label>
+          <select id="sortBy">
+            <option value="default">默认排序</option>
+            <option value="deadline">即将截止</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-sections">
+        <div class="filter-section">
+          <div class="filter-label">地区</div>
+          <div class="filter-chips" id="regionChips"></div>
+        </div>
+        <div class="filter-section">
+          <div class="filter-label">类别</div>
+          <div class="filter-chips" id="categoryChips"></div>
+        </div>
+        <div class="filter-section compact">
+          <div class="filter-label">专业限制</div>
+          <div class="filter-chips" id="professionalLimitChips"></div>
+        </div>
+        <div class="filter-section compact">
+          <div class="filter-label">考试类型</div>
+          <div class="filter-chips" id="examTypeChips"></div>
+        </div>
+      </div>
+
+      <div class="selected-line" id="selectedLine"></div>
+
+      <div class="filter-bottom">
+        <div class="segmented" id="statusTabs">
+          <button type="button" class="active" data-status="all">全部</button>
+          <button type="button" data-status="upcoming">未开始</button>
+          <button type="button" data-status="active">可报名</button>
+          <button type="button" data-status="expired">已截止</button>
+        </div>
+        <button class="btn secondary" type="button" onclick="resetFilters()">清空筛选</button>
+      </div>
+    </section>
+
+    <section>
+      <div class="summary-row">
+        <span>共找到 <strong id="countText">0</strong> 条公告</span>
+        <span id="updatedText"></span>
+      </div>
+      <div class="job-list" id="jobList">
+        <div class="loading-state">正在加载招录信息...</div>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </section>
+  </main>
+
+  <script src="../../config.js"></script>
+  <script src="shared.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

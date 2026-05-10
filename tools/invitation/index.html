@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>微信邀约线下系统</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+  <main class="app-shell">
+    <header class="page-head">
+      <div>
+        <h1>微信邀约线下系统</h1>
+        <p>微信客户邀约、到访、跟进与成交管理</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn secondary" type="button" onclick="loadAppointments()">刷新</button>
+        <button class="btn" type="button" onclick="openForm()">+ 新增邀约</button>
+      </div>
+    </header>
+
+    <section class="stat-grid">
+      <article class="stat-card">
+        <span class="stat-icon blue" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M7 3v3M17 3v3M4.5 9.5h15M6.5 5.5h11A2.5 2.5 0 0 1 20 8v9.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5V8a2.5 2.5 0 0 1 2.5-2.5Z"/><path d="M8 13h3M8 16h6"/></svg>
+        </span>
+        <div><p>今日预约</p><strong id="todayCount">0</strong></div>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon green" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M20 7 10 17l-5-5"/><path d="M12 3.5a8.5 8.5 0 1 0 8.14 6.05"/></svg>
+        </span>
+        <div><p>今日到访</p><strong id="visitCount">0</strong></div>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon orange" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 8v5l3 2"/><path d="M4.5 12a7.5 7.5 0 1 0 15 0 7.5 7.5 0 0 0-15 0Z"/><path d="M8 3.5 5.5 6M16 3.5 18.5 6"/></svg>
+        </span>
+        <div><p>待跟进</p><strong id="followCount">0</strong></div>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon purple" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 7.5h12M7 7.5l1.5 12h7l1.5-12"/><path d="M9 7.5V6a3 3 0 0 1 6 0v1.5"/><path d="M10 12h4M10 15h4"/></svg>
+        </span>
+        <div><p>本月成交</p><strong id="dealCount">0</strong></div>
+      </article>
+    </section>
+
+    <section class="panel filter-panel">
+      <div class="filter-grid">
+        <div class="field keyword-field">
+          <label for="keyword">关键词</label>
+          <input id="keyword" type="search" placeholder="搜索姓名、电话、微信、业务、备注">
+        </div>
+        <div class="field">
+          <label for="dateFilter">预约日期</label>
+          <input id="dateFilter" type="date">
+        </div>
+        <div class="field">
+          <label for="businessFilter">意向业务</label>
+          <select id="businessFilter" class="native-select-hidden" aria-hidden="true" tabindex="-1"></select>
+          <div class="glass-select" id="businessFilterCustom" data-select="businessFilter">
+            <button class="glass-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span>全部业务</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="glass-select-menu" role="listbox"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="staffFilter">查看范围</label>
+          <select id="staffFilter"></select>
+        </div>
+        <div class="field">
+          <label for="statusFilter">到访状态</label>
+          <select id="statusFilter"></select>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <div class="segmented" id="quickTabs">
+          <button class="active" type="button" data-quick="all">全部</button>
+          <button type="button" data-quick="today">今日到访</button>
+          <button type="button" data-quick="follow">待跟进</button>
+          <button type="button" data-quick="deal">已成交</button>
+        </div>
+        <button class="btn secondary" type="button" onclick="resetFilters()">清空筛选</button>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="main-list">
+        <div class="section-line">
+          <h2>邀约列表</h2>
+          <span>共 <strong id="resultCount">0</strong> 条记录</span>
+        </div>
+        <div class="appointment-list" id="appointmentList">
+          <div class="empty-state">正在加载邀约记录...</div>
+        </div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+
+      <aside class="side-stack">
+        <section class="panel side-card">
+          <div class="side-title">转化概览</div>
+          <div class="funnel">
+            <div><span>预约</span><strong id="funnelBook">0</strong></div>
+            <div><span>到访</span><strong id="funnelVisit">0</strong></div>
+            <div><span>成交</span><strong id="funnelDeal">0</strong></div>
+          </div>
+          <p class="rate-line">到访率 <strong id="visitRate">0%</strong> · 成交率 <strong id="dealRate">0%</strong></p>
+        </section>
+        <section class="panel side-card">
+          <div class="side-title">待跟进提醒</div>
+          <div class="reminder-list" id="reminderList"></div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <div class="modal-layer" id="formModal">
+    <form class="modal" id="appointmentForm">
+      <input type="hidden" id="appointmentId">
+      <div class="modal-head">
+        <h3 id="formTitle">新增邀约</h3>
+        <button type="button" class="icon-btn" onclick="closeForm()">×</button>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="name">姓名</label>
+          <input id="name" placeholder="客户姓名">
+        </div>
+        <div class="field">
+          <label for="phone">电话</label>
+          <input id="phone" inputmode="numeric" maxlength="11" placeholder="11位手机号">
+        </div>
+        <div class="field">
+          <label for="wechatName">微信昵称</label>
+          <input id="wechatName" placeholder="可选">
+        </div>
+        <div class="field">
+          <label for="wechatId">微信号</label>
+          <input id="wechatId" placeholder="可选">
+        </div>
+        <div class="field">
+          <label for="relation">身份</label>
+          <select id="relation"></select>
+        </div>
+        <div class="field">
+          <label for="education">当前学历</label>
+          <select id="education"></select>
+        </div>
+        <div class="field">
+          <label for="major">专业</label>
+          <input id="major" placeholder="例如：会计">
+        </div>
+        <div class="field">
+          <label for="graduationYear">毕业年份</label>
+          <input id="graduationYear" inputmode="numeric" maxlength="4" placeholder="例如：2024">
+        </div>
+        <div class="field">
+          <label for="businessType">意向业务</label>
+          <select id="businessType"></select>
+        </div>
+        <div class="field">
+          <label for="sourceChannel">来源渠道</label>
+          <select id="sourceChannel"></select>
+        </div>
+        <div class="field">
+          <label for="appointmentDate">预约日期 *</label>
+          <input id="appointmentDate" type="date" required>
+        </div>
+        <div class="field">
+          <label for="appointmentTime">预约时间 *</label>
+          <input id="appointmentTime" type="time" required>
+        </div>
+        <div class="field">
+          <label for="inviteStaff">邀约客服 *</label>
+          <select id="inviteStaff" required></select>
+        </div>
+        <div class="field">
+          <label for="visitStatus">到访状态 *</label>
+          <select id="visitStatus" required></select>
+        </div>
+        <div class="field">
+          <label for="intentionLevel">意向程度</label>
+          <select id="intentionLevel"></select>
+        </div>
+        <div class="field">
+          <label for="dealStatus">成交状态</label>
+          <select id="dealStatus"></select>
+        </div>
+        <div class="field">
+          <label for="nextFollowDate">下次跟进</label>
+          <input id="nextFollowDate" type="date">
+        </div>
+        <div class="field full">
+          <label for="notes">备注</label>
+          <textarea id="notes" placeholder="微信沟通重点、家长关心点、价格敏感度、后续提醒"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn secondary" type="button" onclick="closeForm()">取消</button>
+        <button class="btn" type="submit">保存邀约</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="modal-layer" id="detailModal">
+    <div class="modal detail-modal">
+      <div class="modal-head">
+        <h3 id="detailTitle">客户详情</h3>
+        <button type="button" class="icon-btn" onclick="closeDetail()">×</button>
+      </div>
+      <div id="detailContent"></div>
+      <div class="follow-box">
+        <label for="followContent">新增跟进记录</label>
+        <textarea id="followContent" placeholder="填写本次沟通结果、下一步动作"></textarea>
+        <div class="follow-actions">
+          <input id="followDate" type="date">
+          <button class="btn" type="button" onclick="addFollowRecord()">添加跟进</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

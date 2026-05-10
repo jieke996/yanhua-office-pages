@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>待办系统</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+  <main class="todo-shell">
+    <header class="page-head">
+      <div>
+        <p class="eyebrow">Yanhua Todo</p>
+        <h1>待办系统</h1>
+        <p>记录今天要完成的事，保持轻快、清楚、有反馈。</p>
+      </div>
+      <div class="head-actions">
+        <button class="icon-button" type="button" onclick="loadTodos()" title="刷新">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v6h-6"/></svg>
+        </button>
+        <button class="btn" type="button" onclick="openForm()">+ 新增待办</button>
+      </div>
+    </header>
+
+    <section class="stat-grid">
+      <article class="stat-card">
+        <span class="stat-icon blue"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+        <div><p>今日待办</p><strong id="todayCount">0</strong></div>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon orange"><svg viewBox="0 0 24 24"><path d="M12 8v5l3 2"/><circle cx="12" cy="12" r="8"/><path d="M8 3.5 5.5 6M16 3.5 18.5 6"/></svg></span>
+        <div><p>逾期未完</p><strong id="overdueCount">0</strong></div>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon purple"><svg viewBox="0 0 24 24"><path d="M12 3 4 7l8 4 8-4-8-4Z"/><path d="m4 12 8 4 8-4"/><path d="m4 17 8 4 8-4"/></svg></span>
+        <div><p>重要事项</p><strong id="importantCount">0</strong></div>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon green"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>
+        <div><p>已完成</p><strong id="doneCount">0</strong></div>
+      </article>
+    </section>
+
+    <section class="panel filter-panel">
+      <div class="filter-grid">
+        <div class="field search-field">
+          <label for="keyword">关键词</label>
+          <input id="keyword" type="search" placeholder="搜索待办内容、备注">
+        </div>
+        <div class="field">
+          <label for="dateFilter">日期</label>
+          <input id="dateFilter" type="date">
+        </div>
+        <div class="field">
+          <label for="priorityFilter">优先级</label>
+          <select id="priorityFilter"></select>
+        </div>
+        <div class="field scope-field" id="scopeField">
+          <label for="scopeFilter">查看范围</label>
+          <select id="scopeFilter"></select>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <div class="segmented" id="statusTabs">
+          <button class="active" type="button" data-status="all">全部</button>
+          <button type="button" data-status="today">今日</button>
+          <button type="button" data-status="pending">未完成</button>
+          <button type="button" data-status="completed">已完成</button>
+          <button type="button" data-status="overdue">已逾期</button>
+        </div>
+        <button class="btn secondary" type="button" onclick="resetFilters()">清空筛选</button>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div>
+        <div class="section-line">
+          <h2>今日待办列表</h2>
+          <span>共 <strong id="resultCount">0</strong> 条</span>
+        </div>
+        <div class="todo-list" id="todoList">
+          <div class="empty-state">正在加载待办...</div>
+        </div>
+        <div class="pagination" id="todoPagination"></div>
+      </div>
+      <aside class="panel side-panel">
+        <div class="side-head">
+          <h2>近期待办</h2>
+          <span id="rangeLabel">近7天</span>
+        </div>
+        <div class="range-tabs" id="rangeTabs">
+          <button class="active" type="button" data-range="all">全部近期</button>
+          <button type="button" data-range="tomorrow">明天</button>
+          <button type="button" data-range="3">近3天</button>
+          <button type="button" data-range="7">近7天</button>
+          <button type="button" data-range="week">本周</button>
+          <button type="button" data-range="custom">自定义</button>
+        </div>
+        <div class="custom-range" id="customRange">
+          <input id="rangeStart" type="date" aria-label="开始日期">
+          <input id="rangeEnd" type="date" aria-label="结束日期">
+        </div>
+        <div class="focus-box">
+          <p>未完成</p>
+          <strong id="rangeCount">0</strong>
+          <span>件近期待办等你处理</span>
+        </div>
+        <div class="mini-list" id="upcomingMiniList"></div>
+      </aside>
+    </section>
+  </main>
+
+  <button class="fab" type="button" onclick="openForm()" aria-label="新增待办">+</button>
+
+  <div class="modal-layer" id="formModal">
+    <form class="modal" id="todoForm">
+      <input type="hidden" id="todoId">
+      <div class="modal-head">
+        <h3 id="formTitle">新增待办</h3>
+        <button class="icon-button" type="button" onclick="closeForm()" aria-label="关闭">×</button>
+      </div>
+      <div class="form-grid">
+        <div class="field full">
+          <label for="title">待办内容 *</label>
+          <input id="title" required placeholder="例如：给初三家长回电话">
+        </div>
+        <div class="field">
+          <label for="dueDate">日期</label>
+          <input id="dueDate" type="date">
+        </div>
+        <div class="field">
+          <label for="dueTime">时间</label>
+          <input id="dueTime" type="time">
+        </div>
+        <div class="field">
+          <label for="priority">优先级</label>
+          <select id="priority">
+            <option>普通</option>
+            <option>重要</option>
+            <option>紧急</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="notes">备注</label>
+          <textarea id="notes" placeholder="补充背景、联系方式或处理思路"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn secondary" type="button" onclick="closeForm()">取消</button>
+        <button class="btn" type="submit">保存待办</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="../../config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
