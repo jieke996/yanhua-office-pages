@@ -2,7 +2,7 @@ const API_BASE = window.RECRUITMENT_API_BASE || (location.protocol === 'file:' ?
 const API_URL = API_BASE + '/api/recruitment';
 
 const DEFAULT_REGIONS = ['科尔沁区', '霍林郭勒市', '开鲁县', '科左中旗', '科左后旗', '库伦旗', '奈曼旗', '扎鲁特旗', '市区及五旗二县'];
-const DEFAULT_CATEGORIES = ['公务员', '事业单位', '教师', '医疗', '国企', '三支一扶', '银行', '公益岗', '社区', '消防', '基层项目人员', '其他'];
+const DEFAULT_CATEGORIES = ['公务员', '事业单位', '教师', '医疗', '国企', '银行', '公益岗', '社区', '消防', '基层项目人员', '其他'];
 const DEFAULT_AGE_OPTIONS = ['18周岁-35周岁', '18周岁-38周岁', '18周岁至30周岁', '18周岁-40周岁', '35周岁以下', '不限年龄'];
 const DEFAULT_SOURCE_OPTIONS = ['内蒙古人事考试网', '北方人事考试服务中心', '通辽就业创业公众号', '科尔沁频道'];
 const DEFAULT_PROFESSIONAL_LIMIT_OPTIONS = ['不限专业', '大部分岗位不限专业', '少部分岗位不限专业', '所有岗位皆限制专业'];
