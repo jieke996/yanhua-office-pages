@@ -75,7 +75,7 @@ function requestSuffix() {
     username: currentUser.username || ''
   });
   const staffFilter = document.getElementById('staffFilter');
-  if (currentUser.role === 'admin' && staffFilter) params.set('scope', staffFilter.value || 'mine');
+  if (currentUser.role === 'admin' && staffFilter) params.set('scope', staffFilter.value || 'all');
   return '?' + params.toString();
 }
 
@@ -269,7 +269,7 @@ function fillStaffScopeSelect() {
     staffFilter.innerHTML = options
       .map(option => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`)
       .join('');
-    staffFilter.value = 'mine';
+    staffFilter.value = 'all';
     return;
   }
 
@@ -299,7 +299,7 @@ function resetFilters() {
   document.getElementById('dateFilter').value = '';
   document.getElementById('businessFilter').value = '';
   document.getElementById('statusFilter').value = '';
-  if (currentUser.role === 'admin') document.getElementById('staffFilter').value = 'mine';
+  if (currentUser.role === 'admin') document.getElementById('staffFilter').value = 'all';
   syncAllGlassSelects();
   quickFilter = 'all';
   document.querySelectorAll('#quickTabs button').forEach(button => {
