@@ -16,7 +16,7 @@ let filters = {
 
 window.addEventListener('DOMContentLoaded', () => {
   const user = getSavedUser();
-  if (user?.role === 'admin') {
+  if (user) {
     document.getElementById('adminLink').style.display = 'inline-flex';
   }
 

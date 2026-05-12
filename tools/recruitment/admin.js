@@ -12,8 +12,8 @@ let adminCurrentPage = 1;
 
 window.addEventListener('DOMContentLoaded', () => {
   const user = getSavedUser();
-  if (!user || user.role !== 'admin') {
-    document.body.innerHTML = '<main class="app-shell"><div class="panel empty-state">只有管理员可以维护招录公告</div></main>';
+  if (!user) {
+    document.body.innerHTML = '<main class="app-shell"><div class="panel empty-state">请先登录后再维护招录公告</div></main>';
     return;
   }
 
