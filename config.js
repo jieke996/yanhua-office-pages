@@ -1,5 +1,5 @@
 (function () {
-  const API_HOST = 'api.hkjzyk.top';
+  const API_HOST = 'cip.hkjzyk.top';
   const API_HTTPS_BASE = `https://${API_HOST}`;
   const host = window.location.hostname;
   const isFile = window.location.protocol === 'file:';
