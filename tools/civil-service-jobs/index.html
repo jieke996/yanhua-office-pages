@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>内蒙古公务员岗位查询</title>
+  <link rel="stylesheet" href="../public-institution-jobs/styles.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">2026 内蒙古公务员</p>
+        <h1>内蒙古公务员岗位查询</h1>
+        <p class="subtitle">覆盖党群、公安、检察院、法院、监狱戒毒、嘎查村岗位。结果仅供初筛，最终以公告要求为准。</p>
+      </div>
+      <div class="stats-card">
+        <span>岗位库</span>
+        <strong id="totalCount">-</strong>
+      </div>
+    </header>
+
+    <section class="filter-panel">
+      <label>
+        <span>学历</span>
+        <select id="education">
+          <option value="">全部</option>
+          <option value="大学本科">大学本科</option>
+          <option value="大学专科">大学专科</option>
+          <option value="研究生">研究生</option>
+        </select>
+      </label>
+      <label>
+        <span>学位</span>
+        <select id="degree">
+          <option value="">全部</option>
+          <option value="不限">不限</option>
+          <option value="学士及以上">学士及以上</option>
+          <option value="硕士及以上">硕士及以上</option>
+          <option value="取得与报名学历相对应的学位">取得与报名学历相对应的学位</option>
+        </select>
+      </label>
+      <label>
+        <span>专业名称</span>
+        <input id="major" type="text" placeholder="例如：法学、汉语言文学">
+      </label>
+      <label>
+        <span>系统类别</span>
+        <select id="systemType">
+          <option value="">全部</option>
+          <option value="党群">党群</option>
+          <option value="公安">公安</option>
+          <option value="检察院">检察院</option>
+          <option value="法院">法院</option>
+          <option value="监狱，戒毒">监狱戒毒</option>
+          <option value="嘎查村">嘎查村</option>
+        </select>
+      </label>
+      <label>
+        <span>地区关键词</span>
+        <input id="region" type="text" placeholder="例如：通辽、霍林郭勒">
+      </label>
+      <label class="check-row">
+        <input id="allRegion" type="checkbox" checked>
+        <span>全部内蒙古</span>
+      </label>
+      <label class="check-row">
+        <input id="includeUnlimitedMajor" type="checkbox" checked>
+        <span>包含不限专业</span>
+      </label>
+      <div class="actions">
+        <button class="primary" id="searchBtn" type="button">查询岗位</button>
+        <button class="ghost" id="resetBtn" type="button">清空</button>
+      </div>
+    </section>
+
+    <section class="district-filter" id="districtFilter" aria-label="通辽地区筛选"></section>
+
+    <section class="result-toolbar">
+      <div>
+        <strong id="resultCount">0</strong>
+        <span>个匹配岗位</span>
+      </div>
+      <div class="toolbar-actions">
+        <button class="ghost compact" id="unitListBtn" type="button" disabled>招录单位</button>
+        <p id="queryHint">当前查询范围：全部内蒙古</p>
+      </div>
+    </section>
+
+    <section class="result-list" id="resultList">
+      <div class="empty">正在加载全部岗位...</div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="unitModal" hidden>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="unitModalTitle">
+      <div class="modal-header">
+        <div>
+          <h2 id="unitModalTitle">招录单位</h2>
+          <p id="unitModalCount">当前查询结果 0 个单位</p>
+        </div>
+        <button class="ghost compact" id="unitModalClose" type="button">关闭</button>
+      </div>
+      <div class="modal-body">
+        <table class="unit-table">
+          <thead>
+            <tr>
+              <th>序号</th>
+              <th>单位名称</th>
+            </tr>
+          </thead>
+          <tbody id="unitTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  <script src="../../config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

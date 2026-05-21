@@ -1,0 +1,317 @@
+const API_BASE = window.YANHUA_API_BASE || (location.protocol === 'file:' ? 'http://localhost:8080' : '');
+const INITIAL_RENDER_COUNT = 40;
+const RENDER_INCREMENT = 40;
+const state = {
+  page: 1,
+  pageSize: 10000,
+  allItems: [],
+  selectedDistricts: new Set(),
+  visibleItems: [],
+  renderedCount: INITIAL_RENDER_COUNT
+};
+const TONGLIAO_DISTRICTS = [
+  { key: 'city', name: '通辽市直', terms: ['通辽市直'], cityDirect: true },
+  { key: 'horqin', name: '科尔沁区', terms: ['科尔沁区'] },
+  { key: 'dev', name: '通辽开发区', terms: ['通辽市市场监督管理局开发区分局', '通辽开发区', '通辽市开发区'] },
+  { key: 'huolinguole', name: '霍林郭勒市', terms: ['霍林郭勒市'] },
+  { key: 'kailu', name: '开鲁县', terms: ['开鲁县', '通辽开鲁生物医药开发区'] },
+  { key: 'leftMiddle', name: '科尔沁左翼中旗', terms: ['科尔沁左翼中旗', '科左中旗'] },
+  { key: 'leftBack', name: '科尔沁左翼后旗', terms: ['科尔沁左翼后旗', '科左后旗'] },
+  { key: 'kulun', name: '库伦旗', terms: ['库伦旗'] },
+  { key: 'naiman', name: '奈曼旗', terms: ['奈曼旗'] },
+  { key: 'zhalute', name: '扎鲁特旗', terms: ['扎鲁特旗'] }
+];
+
+const els = {
+  education: document.getElementById('education'),
+  major: document.getElementById('major'),
+  systemType: document.getElementById('systemType'),
+  region: document.getElementById('region'),
+  degree: document.getElementById('degree'),
+  allRegion: document.getElementById('allRegion'),
+  includeUnlimitedMajor: document.getElementById('includeUnlimitedMajor'),
+  searchBtn: document.getElementById('searchBtn'),
+  resetBtn: document.getElementById('resetBtn'),
+  totalCount: document.getElementById('totalCount'),
+  resultCount: document.getElementById('resultCount'),
+  queryHint: document.getElementById('queryHint'),
+  resultList: document.getElementById('resultList'),
+  districtFilter: document.getElementById('districtFilter'),
+  unitListBtn: document.getElementById('unitListBtn'),
+  unitModal: document.getElementById('unitModal'),
+  unitModalClose: document.getElementById('unitModalClose'),
+  unitModalCount: document.getElementById('unitModalCount'),
+  unitTableBody: document.getElementById('unitTableBody')
+};
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, s => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[s]));
+}
+
+function params() {
+  return new URLSearchParams({
+    education: els.education.value,
+    major: els.major.value.trim(),
+    systemType: els.systemType.value,
+    region: els.region.value.trim(),
+    degree: els.degree.value,
+    allRegion: String(els.allRegion.checked),
+    includeUnlimitedMajor: String(els.includeUnlimitedMajor.checked),
+    page: String(state.page),
+    pageSize: String(state.pageSize)
+  });
+}
+
+function itemDistrictText(item) {
+  return [
+    item.agencyName,
+    item.positionName,
+    item.positionIntro,
+    item.unitLevel,
+    item.otherConditions,
+    item.remark
+  ].filter(Boolean).join(' ');
+}
+
+function districtForItem(item) {
+  const text = itemDistrictText(item);
+  const nonCityDistricts = TONGLIAO_DISTRICTS.filter(district => !district.cityDirect);
+  const matched = nonCityDistricts.find(district => district.terms.some(term => text.includes(term)));
+  if (matched) return matched.key;
+  if (text.includes('通辽市')) return 'city';
+  return '';
+}
+
+function districtCounts(items) {
+  const counts = new Map(TONGLIAO_DISTRICTS.map(district => [district.key, 0]));
+  items.forEach(item => {
+    const key = districtForItem(item);
+    if (key) counts.set(key, (counts.get(key) || 0) + 1);
+  });
+  return counts;
+}
+
+function visibleItems() {
+  if (!state.selectedDistricts.size) return state.allItems;
+  return state.allItems.filter(item => state.selectedDistricts.has(districtForItem(item)));
+}
+
+function updateDisplayedResults() {
+  const items = visibleItems();
+  state.visibleItems = items;
+  state.renderedCount = INITIAL_RENDER_COUNT;
+  els.resultCount.textContent = items.length;
+  updateUnitButton(items);
+  render(items);
+}
+
+function unitNameForItem(item) {
+  return item.agencyName || '-';
+}
+
+function uniqueUnitNames(items) {
+  return [...new Set(items.map(unitNameForItem).filter(name => name && name !== '-'))];
+}
+
+function updateUnitButton(items) {
+  els.unitListBtn.disabled = !uniqueUnitNames(items).length;
+}
+
+function openUnitModal() {
+  const unitNames = uniqueUnitNames(state.visibleItems);
+  els.unitModalCount.textContent = `当前查询结果 ${unitNames.length} 个单位`;
+  els.unitTableBody.innerHTML = unitNames.length ? unitNames.map((name, index) => `
+    <tr>
+      <td>${index + 1}</td>
+      <td>${escapeHtml(name)}</td>
+    </tr>
+  `).join('') : '<tr><td colspan="2">暂无招录单位</td></tr>';
+  els.unitModal.hidden = false;
+  document.body.classList.add('modal-open');
+}
+
+function closeUnitModal() {
+  els.unitModal.hidden = true;
+  document.body.classList.remove('modal-open');
+}
+
+function renderDistrictFilter(items) {
+  state.selectedDistricts.clear();
+  const counts = districtCounts(items);
+  const districts = TONGLIAO_DISTRICTS
+    .map(district => ({ ...district, count: counts.get(district.key) || 0 }))
+    .filter(district => district.count > 0);
+
+  if (!districts.length) {
+    els.districtFilter.className = 'district-filter';
+    els.districtFilter.innerHTML = '';
+    return;
+  }
+
+  els.districtFilter.className = 'district-filter show';
+  els.districtFilter.innerHTML = [
+    '<span class="district-label">地区筛选</span>',
+    ...districts.map(district => `
+      <label class="district-chip">
+        <input type="checkbox" value="${escapeHtml(district.key)}">
+        <span>${escapeHtml(district.name)}（${district.count}个）</span>
+      </label>
+    `)
+  ].join('');
+
+  els.districtFilter.querySelectorAll('input[type="checkbox"]').forEach(input => {
+    input.addEventListener('change', () => {
+      if (input.checked) state.selectedDistricts.add(input.value);
+      else state.selectedDistricts.delete(input.value);
+      updateDisplayedResults();
+    });
+  });
+}
+
+async function loadStats() {
+  try {
+    const res = await fetch(`${API_BASE}/api/job-search/stats`);
+    const result = await res.json();
+    if (result.success) els.totalCount.textContent = result.data.civilServiceTotal || 0;
+  } catch (error) {
+    els.totalCount.textContent = '-';
+  }
+}
+
+function render(items) {
+  state.visibleItems = items;
+  if (!items.length) {
+    els.resultList.innerHTML = '<div class="empty">没有匹配到岗位，请调整专业、学历或勾选全部内蒙古后重试。</div>';
+    return;
+  }
+  const shownItems = items.slice(0, state.renderedCount);
+  const hasMore = shownItems.length < items.length;
+  const cards = shownItems.map(item => `
+    <article class="job-card">
+      <div class="job-top">
+        <div>
+          <h2 class="job-title">${escapeHtml(item.positionName)}</h2>
+          <p class="job-unit">${escapeHtml(item.agencyName)} · ${escapeHtml(item.systemType)}</p>
+        </div>
+        <div class="count-pill">招 ${escapeHtml(item.recruitCount)} 人</div>
+      </div>
+      <div class="meta-grid">
+        <div class="meta"><span>学历</span><strong>${escapeHtml(item.education || '-')}</strong></div>
+        <div class="meta"><span>学位</span><strong>${escapeHtml(item.degree || '-')}</strong></div>
+        <div class="meta"><span>单位层级</span><strong>${escapeHtml(item.unitLevel || '-')}</strong></div>
+        <div class="meta"><span>机构性质</span><strong>${escapeHtml(item.organizationType || '-')}</strong></div>
+        <div class="meta"><span>政治面貌</span><strong>${escapeHtml(item.politicalStatus || '不限')}</strong></div>
+        <div class="meta"><span>基层年限</span><strong>${escapeHtml(item.minBaseWorkYears || '不限')}</strong></div>
+        <div class="meta"><span>户籍限制</span><strong>${escapeHtml(item.householdLimit || '不限')}</strong></div>
+        <div class="meta"><span>咨询电话</span><strong>${escapeHtml(item.phone || '-')}</strong></div>
+      </div>
+      <div class="major-box"><strong>专业要求：</strong>${escapeHtml(item.major || '-')}</div>
+      <div class="major-box"><strong>职位简介：</strong>${escapeHtml(item.positionIntro || '-')}</div>
+      <div class="tags">${item.matchReasons.map(reason => `<span class="tag">${escapeHtml(reason)}</span>`).join('')}</div>
+      <details>
+        <summary>查看其它条件</summary>
+        <div class="detail-grid">
+          <div><strong>是否仅限应届：</strong>${escapeHtml(item.freshGraduateOnly || '否/不限')}</div>
+          <div><strong>艰苦边远地区：</strong>${escapeHtml(item.hardRemoteArea || '否/不限')}</div>
+          <div><strong>专业能力测试：</strong>${escapeHtml(item.professionalTest || '否/不限')}</div>
+          <div><strong>体能测评：</strong>${escapeHtml(item.physicalTest || '否/不限')}</div>
+          <div><strong>警务技术职位：</strong>${escapeHtml(item.policeTechnicalPosition || '否/不限')}</div>
+          <div><strong>性别：</strong>${escapeHtml(item.gender || '不限')}</div>
+          <div><strong>最低服务年限：</strong>${escapeHtml(item.minServiceYears || '-')}</div>
+          <div><strong>其他条件：</strong>${escapeHtml(item.otherConditions || '无')}</div>
+          <div><strong>备注：</strong>${escapeHtml(item.remark || '无')}</div>
+        </div>
+      </details>
+    </article>
+  `).join('');
+  const loadMore = hasMore ? `
+    <div class="load-more-wrap">
+      <button class="ghost load-more" id="loadMoreBtn" type="button">
+        加载更多（已显示 ${shownItems.length} / ${items.length}）
+      </button>
+    </div>
+  ` : '';
+  els.resultList.innerHTML = cards + loadMore;
+}
+
+async function search() {
+  els.searchBtn.disabled = true;
+  els.searchBtn.textContent = '查询中...';
+  try {
+    const res = await fetch(`${API_BASE}/api/job-search/civil-service?${params().toString()}`);
+    const result = await res.json();
+    const data = result.data || { total: 0, items: [] };
+    state.allItems = data.items || [];
+    state.selectedDistricts.clear();
+    state.renderedCount = INITIAL_RENDER_COUNT;
+    state.visibleItems = state.allItems;
+    els.resultCount.textContent = state.allItems.length;
+    updateUnitButton(state.allItems);
+    els.queryHint.textContent = els.allRegion.checked ? '当前查询范围：全部内蒙古' : `当前查询范围：${els.region.value.trim() || '通辽'}`;
+    renderDistrictFilter(state.allItems);
+    render(state.allItems);
+  } catch (error) {
+    els.resultList.innerHTML = '<div class="empty">查询失败，请确认后端服务已启动。</div>';
+  } finally {
+    els.searchBtn.disabled = false;
+    els.searchBtn.textContent = '查询岗位';
+  }
+}
+
+function reset() {
+  els.education.value = '';
+  els.major.value = '';
+  els.systemType.value = '';
+  els.region.value = '';
+  els.degree.value = '';
+  els.allRegion.checked = true;
+  els.region.disabled = true;
+  els.includeUnlimitedMajor.checked = true;
+  state.allItems = [];
+  state.selectedDistricts.clear();
+  state.visibleItems = [];
+  els.resultCount.textContent = '0';
+  updateUnitButton([]);
+  els.queryHint.textContent = '当前查询范围：全部内蒙古';
+  els.districtFilter.className = 'district-filter';
+  els.districtFilter.innerHTML = '';
+  els.resultList.innerHTML = '<div class="empty">正在加载岗位...</div>';
+  search();
+}
+
+els.searchBtn.addEventListener('click', search);
+els.resetBtn.addEventListener('click', reset);
+els.unitListBtn.addEventListener('click', openUnitModal);
+els.unitModalClose.addEventListener('click', closeUnitModal);
+els.unitModal.addEventListener('click', event => {
+  if (event.target === els.unitModal) closeUnitModal();
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !els.unitModal.hidden) closeUnitModal();
+});
+els.resultList.addEventListener('click', event => {
+  if (!event.target.closest('#loadMoreBtn')) return;
+  state.renderedCount += RENDER_INCREMENT;
+  render(state.visibleItems);
+});
+[els.major, els.region].forEach(input => {
+  input.addEventListener('keydown', event => {
+    if (event.key === 'Enter') search();
+  });
+});
+els.region.addEventListener('pointerdown', () => {
+  if (!els.region.disabled) return;
+  els.allRegion.checked = false;
+  els.region.disabled = false;
+  els.region.focus();
+});
+els.allRegion.addEventListener('change', () => {
+  els.region.disabled = els.allRegion.checked;
+  if (els.allRegion.checked) els.region.value = '';
+});
+
+els.region.disabled = els.allRegion.checked;
+loadStats();
+search();
