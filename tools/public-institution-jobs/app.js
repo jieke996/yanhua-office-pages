@@ -1,13 +1,13 @@
 const API_BASE = window.YANHUA_API_BASE || (location.protocol === 'file:' ? 'http://localhost:8080' : '');
-const INITIAL_RENDER_COUNT = 40;
-const RENDER_INCREMENT = 40;
+const PAGE_SIZE = 40;
 const state = {
   page: 1,
-  pageSize: 10000,
+  pageSize: PAGE_SIZE,
+  total: 0,
   allItems: [],
   selectedDistricts: new Set(),
   visibleItems: [],
-  renderedCount: INITIAL_RENDER_COUNT
+  loadingMore: false
 };
 const TONGLIAO_DISTRICTS = [
   { key: 'city', name: '通辽市直', terms: ['通辽市直'], cityDirect: true },
@@ -102,8 +102,7 @@ function visibleItems() {
 function updateDisplayedResults() {
   const items = visibleItems();
   state.visibleItems = items;
-  state.renderedCount = INITIAL_RENDER_COUNT;
-  els.resultCount.textContent = items.length;
+  els.resultCount.textContent = state.total;
   updateUnitButton(items);
   render(items);
 }
@@ -122,7 +121,7 @@ function updateUnitButton(items) {
 
 function openUnitModal() {
   const unitNames = uniqueUnitNames(state.visibleItems);
-  els.unitModalCount.textContent = `当前查询结果 ${unitNames.length} 个单位`;
+  els.unitModalCount.textContent = `已加载结果 ${unitNames.length} 个单位`;
   els.unitTableBody.innerHTML = unitNames.length ? unitNames.map((name, index) => `
     <tr>
       <td>${index + 1}</td>
@@ -138,7 +137,8 @@ function closeUnitModal() {
   document.body.classList.remove('modal-open');
 }
 
-function renderDistrictFilter(items) {
+function renderDistrictFilter(items, resetSelection = true) {
+  const previousSelection = resetSelection ? new Set() : new Set(state.selectedDistricts);
   state.selectedDistricts.clear();
   const counts = districtCounts(items);
   const districts = TONGLIAO_DISTRICTS
@@ -163,6 +163,8 @@ function renderDistrictFilter(items) {
   ].join('');
 
   els.districtFilter.querySelectorAll('input[type="checkbox"]').forEach(input => {
+    input.checked = previousSelection.has(input.value);
+    if (input.checked) state.selectedDistricts.add(input.value);
     input.addEventListener('change', () => {
       if (input.checked) state.selectedDistricts.add(input.value);
       else state.selectedDistricts.delete(input.value);
@@ -183,13 +185,12 @@ async function loadStats() {
 
 function render(items) {
   state.visibleItems = items;
-  if (!items.length) {
+  if (!state.allItems.length) {
     els.resultList.innerHTML = '<div class="empty">没有匹配到岗位，请调整专业、学历或勾选全部内蒙古后重试。</div>';
     return;
   }
-  const shownItems = items.slice(0, state.renderedCount);
-  const hasMore = shownItems.length < items.length;
-  const cards = shownItems.map(item => `
+  const hasMore = state.allItems.length < state.total;
+  const cards = items.length ? items.map(item => `
     <article class="job-card">
       <div class="job-top">
         <div>
@@ -219,11 +220,11 @@ function render(items) {
         </div>
       </details>
     </article>
-  `).join('');
+  `).join('') : '<div class="empty">已加载结果中没有匹配当前地区的岗位，可继续加载更多岗位。</div>';
   const loadMore = hasMore ? `
     <div class="load-more-wrap">
-      <button class="ghost load-more" id="loadMoreBtn" type="button">
-        加载更多（已显示 ${shownItems.length} / ${items.length}）
+      <button class="ghost load-more" id="loadMoreBtn" type="button" ${state.loadingMore ? 'disabled' : ''}>
+        ${state.loadingMore ? '加载中...' : `加载更多（已加载 ${state.allItems.length} / ${state.total}）`}
       </button>
     </div>
   ` : '';
@@ -234,14 +235,19 @@ async function search() {
   els.searchBtn.disabled = true;
   els.searchBtn.textContent = '查询中...';
   try {
+    state.page = 1;
+    state.total = 0;
+    state.allItems = [];
+    state.selectedDistricts.clear();
+    state.visibleItems = [];
+    els.resultList.innerHTML = '<div class="empty">正在加载岗位...</div>';
     const res = await fetch(`${API_BASE}/api/job-search/public-institution?${params().toString()}`);
     const result = await res.json();
     const data = result.data || { total: 0, items: [] };
+    state.total = data.total || 0;
     state.allItems = data.items || [];
-    state.selectedDistricts.clear();
-    state.renderedCount = INITIAL_RENDER_COUNT;
     state.visibleItems = state.allItems;
-    els.resultCount.textContent = state.allItems.length;
+    els.resultCount.textContent = state.total;
     updateUnitButton(state.allItems);
     els.queryHint.textContent = els.allRegion.checked ? '当前查询范围：全部内蒙古' : `当前查询范围：${els.region.value.trim() || '通辽'}`;
     renderDistrictFilter(state.allItems);
@@ -251,6 +257,31 @@ async function search() {
   } finally {
     els.searchBtn.disabled = false;
     els.searchBtn.textContent = '查询岗位';
+  }
+}
+
+async function loadMore() {
+  if (state.loadingMore || state.allItems.length >= state.total) return;
+  state.loadingMore = true;
+  render(visibleItems());
+  try {
+    state.page += 1;
+    const res = await fetch(`${API_BASE}/api/job-search/public-institution?${params().toString()}`);
+    const result = await res.json();
+    const data = result.data || { total: state.total, items: [] };
+    state.total = data.total || state.total;
+    state.allItems = state.allItems.concat(data.items || []);
+    const items = visibleItems();
+    els.resultCount.textContent = state.total;
+    updateUnitButton(items);
+    renderDistrictFilter(state.allItems, false);
+    render(visibleItems());
+  } catch (error) {
+    state.page = Math.max(1, state.page - 1);
+    els.resultList.insertAdjacentHTML('beforeend', '<div class="empty">加载更多失败，请稍后重试。</div>');
+  } finally {
+    state.loadingMore = false;
+    render(visibleItems());
   }
 }
 
@@ -266,6 +297,8 @@ function reset() {
   state.allItems = [];
   state.selectedDistricts.clear();
   state.visibleItems = [];
+  state.total = 0;
+  state.page = 1;
   els.resultCount.textContent = '0';
   updateUnitButton([]);
   els.queryHint.textContent = '当前查询范围：全部内蒙古';
@@ -287,8 +320,7 @@ document.addEventListener('keydown', event => {
 });
 els.resultList.addEventListener('click', event => {
   if (!event.target.closest('#loadMoreBtn')) return;
-  state.renderedCount += RENDER_INCREMENT;
-  render(state.visibleItems);
+  loadMore();
 });
 [els.major, els.region].forEach(input => {
   input.addEventListener('keydown', event => {
