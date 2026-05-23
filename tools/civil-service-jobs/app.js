@@ -5,6 +5,7 @@ const state = {
   pageSize: PAGE_SIZE,
   total: 0,
   allItems: [],
+  unitNames: [],
   selectedDistricts: new Set(),
   visibleItems: [],
   loadingMore: false
@@ -115,12 +116,16 @@ function uniqueUnitNames(items) {
 }
 
 function updateUnitButton(items) {
-  els.unitListBtn.disabled = !uniqueUnitNames(items).length;
+  const unitNames = state.selectedDistricts.size ? uniqueUnitNames(items) : state.unitNames;
+  els.unitListBtn.disabled = !unitNames.length;
 }
 
 function openUnitModal() {
-  const unitNames = uniqueUnitNames(state.visibleItems);
-  els.unitModalCount.textContent = `已加载结果 ${unitNames.length} 个单位`;
+  const usingDistrictFilter = state.selectedDistricts.size > 0;
+  const unitNames = usingDistrictFilter ? uniqueUnitNames(state.visibleItems) : state.unitNames;
+  els.unitModalCount.textContent = usingDistrictFilter
+    ? `已加载且符合地区筛选结果 ${unitNames.length} 个单位`
+    : `当前查询结果 ${unitNames.length} 个单位`;
   els.unitTableBody.innerHTML = unitNames.length ? unitNames.map((name, index) => `
     <tr>
       <td>${index + 1}</td>
@@ -244,6 +249,7 @@ async function search() {
     state.page = 1;
     state.total = 0;
     state.allItems = [];
+    state.unitNames = [];
     state.selectedDistricts.clear();
     state.visibleItems = [];
     els.resultList.innerHTML = '<div class="empty">正在加载岗位...</div>';
@@ -252,6 +258,7 @@ async function search() {
     const data = result.data || { total: 0, items: [] };
     state.total = data.total || 0;
     state.allItems = data.items || [];
+    state.unitNames = data.unitNames || uniqueUnitNames(state.allItems);
     state.visibleItems = state.allItems;
     els.resultCount.textContent = state.total;
     updateUnitButton(state.allItems);
@@ -277,6 +284,7 @@ async function loadMore() {
     const data = result.data || { total: state.total, items: [] };
     state.total = data.total || state.total;
     state.allItems = state.allItems.concat(data.items || []);
+    state.unitNames = data.unitNames || state.unitNames;
     const items = visibleItems();
     els.resultCount.textContent = state.total;
     updateUnitButton(items);
@@ -301,6 +309,7 @@ function reset() {
   els.region.disabled = true;
   els.includeUnlimitedMajor.checked = true;
   state.allItems = [];
+  state.unitNames = [];
   state.selectedDistricts.clear();
   state.visibleItems = [];
   state.total = 0;
