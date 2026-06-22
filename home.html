@@ -600,6 +600,16 @@
     <script>
         const API_BASE = window.YANHUA_API_BASE || (location.protocol === 'file:' ? 'http://localhost:8080' : '');
         const DEFAULT_SETTINGS = { brandName: '言华教育' };
+        const LOCAL_TOOL_ENTRY = {
+            id: 'local-tongliao-public-institution-jobs',
+            name: '通辽市事业单位岗位查询',
+            icon: 'building',
+            url: 'tools/tongliao-public-institution-jobs/index.html',
+            openMode: 'iframe',
+            visible: true,
+            order: 0,
+            children: []
+        };
         let currentUser=null, tools=[], recruitmentJobs=[], invitations=[], todos=[], currentTool=null, expandedTools=new Set(), searchEngine='baidu';
         let appSettings = { ...DEFAULT_SETTINGS };
         const engineUrls = { baidu:'https://www.baidu.com/s?wd=', bing:'https://www.bing.com/search?q=', google:'https://www.google.com/search?q=' };
@@ -645,8 +655,23 @@
             try{
                 const res=await fetch(API_BASE+'/api/tools?role='+(currentUser.role||'user'));
                 const result=await res.json();
-                if(result.success){tools=result.data;renderTools();renderDashboard();}
+                if(result.success){tools=withLocalToolEntry(result.data||[]);renderTools();renderDashboard();}
             }catch(e){showToast('工具列表加载失败');}
+        }
+
+        function withLocalToolEntry(list){
+            const next=(Array.isArray(list)?list:[]).map(tool=>({
+                ...tool,
+                children:Array.isArray(tool.children)?tool.children:[]
+            }));
+            const exists=next.some(tool=>tool.name===LOCAL_TOOL_ENTRY.name||tool.url===LOCAL_TOOL_ENTRY.url
+                ||(tool.children||[]).some(child=>child.name===LOCAL_TOOL_ENTRY.name||child.url===LOCAL_TOOL_ENTRY.url));
+            if(exists) return next;
+            const insertIndex=next.findIndex(tool=>tool.name&&tool.name.includes('内蒙古公务员岗位查询'));
+            const localTool={...LOCAL_TOOL_ENTRY, children:[]};
+            if(insertIndex>=0) next.splice(insertIndex+1,0,localTool);
+            else next.push(localTool);
+            return next;
         }
 
         async function loadDashboardData(){

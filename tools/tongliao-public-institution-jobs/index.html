@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通辽市事业单位岗位查询</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">2026 通辽市事业单位</p>
+        <h1>通辽市事业单位岗位查询</h1>
+        <p class="subtitle">基于《2026年通辽市事业单位公开招聘工作人员岗位表》制作，输入学历、专业和地区快速初筛可报岗位。</p>
+      </div>
+      <div class="stats-card">
+        <span>岗位库</span>
+        <strong id="totalCount">-</strong>
+        <em id="recruitTotal">合计 - 人</em>
+      </div>
+    </header>
+
+    <section class="filter-panel">
+      <label>
+        <span>学历</span>
+        <select id="education">
+          <option value="">全部</option>
+        </select>
+      </label>
+      <label>
+        <span>学位</span>
+        <select id="degree">
+          <option value="">全部</option>
+        </select>
+      </label>
+      <label>
+        <span>专业名称</span>
+        <input id="major" type="text" placeholder="例如：会计学、法学、护理">
+      </label>
+      <label>
+        <span>岗位类型</span>
+        <select id="jobType">
+          <option value="">全部</option>
+          <option value="normal">普通岗位</option>
+          <option value="project">项目人员</option>
+          <option value="graduate">高校毕业生</option>
+          <option value="mongolian">兼通蒙古语言文字</option>
+        </select>
+      </label>
+      <label>
+        <span>笔试分类</span>
+        <select id="examCategory">
+          <option value="">全部</option>
+        </select>
+      </label>
+      <label>
+        <span>地区</span>
+        <select id="region">
+          <option value="">全部地区</option>
+        </select>
+      </label>
+      <label>
+        <span>关键词</span>
+        <input id="keyword" type="text" placeholder="单位、岗位、条件、备注">
+      </label>
+      <label class="check-row">
+        <input id="includeUnlimitedMajor" type="checkbox" checked>
+        <span>包含不限专业</span>
+      </label>
+      <div class="actions">
+        <button class="primary" id="searchBtn" type="button">查询岗位</button>
+        <button class="ghost" id="resetBtn" type="button">清空</button>
+      </div>
+    </section>
+
+    <section class="district-filter" id="districtFilter" aria-label="通辽地区快捷筛选"></section>
+
+    <section class="result-toolbar">
+      <div>
+        <strong id="resultCount">0</strong>
+        <span>个匹配岗位</span>
+      </div>
+      <div class="toolbar-actions">
+        <button class="ghost compact" id="unitListBtn" type="button" disabled>招聘单位</button>
+        <p id="queryHint">当前查询范围：全部地区</p>
+      </div>
+    </section>
+
+    <section class="result-list" id="resultList">
+      <div class="empty">正在加载岗位...</div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="unitModal" hidden>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="unitModalTitle">
+      <div class="modal-header">
+        <div>
+          <h2 id="unitModalTitle">招聘单位</h2>
+          <p id="unitModalCount">当前查询结果 0 个单位</p>
+        </div>
+        <button class="ghost compact" id="unitModalClose" type="button">关闭</button>
+      </div>
+      <div class="modal-body">
+        <table class="unit-table">
+          <thead>
+            <tr>
+              <th>序号</th>
+              <th>单位名称</th>
+            </tr>
+          </thead>
+          <tbody id="unitTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="jobs-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
