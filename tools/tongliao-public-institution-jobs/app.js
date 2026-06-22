@@ -159,6 +159,26 @@ function matchReasonTags(job) {
   return tags.length ? tags : jobTypeTags(job).slice(0, 2);
 }
 
+function majorRowsForJob(job) {
+  const education = job.education || '';
+  const rows = [];
+  const addRow = (label, value) => {
+    const text = value || '该学历层级未设置专业要求';
+    rows.push(`<div class="major-box"><strong>${label}：</strong>${escapeHtml(text)}</div>`);
+  };
+
+  if (education.includes('专科')) addRow('专科', job.majorCollege);
+  if (education.includes('专科') || education.includes('本科')) addRow('本科', job.majorUndergraduate);
+  if (education.includes('专科') || education.includes('本科') || education.includes('研究生')) addRow('研究生', job.majorGraduate);
+
+  if (!rows.length) {
+    addRow('专科', job.majorCollege);
+    addRow('本科', job.majorUndergraduate);
+    addRow('研究生', job.majorGraduate);
+  }
+  return rows.join('');
+}
+
 function renderDistrictFilter(items, resetSelection = true) {
   const previousSelection = resetSelection ? new Set() : new Set(state.selectedDistricts);
   state.selectedDistricts.clear();
@@ -224,9 +244,7 @@ function renderJobCard(job) {
         <div class="meta"><span>普通/项目</span><strong>${escapeHtml(`${job.counts.normal || 0}/${job.counts.project || 0}`)}</strong></div>
         <div class="meta"><span>高校/兼通</span><strong>${escapeHtml(`${job.counts.graduate || 0}/${job.counts.mongolian || 0}`)}</strong></div>
       </div>
-      <div class="major-box"><strong>专科：</strong>${escapeHtml(job.majorCollege || '未列明')}</div>
-      <div class="major-box"><strong>本科：</strong>${escapeHtml(job.majorUndergraduate || '未列明')}</div>
-      <div class="major-box"><strong>研究生：</strong>${escapeHtml(job.majorGraduate || '未列明')}</div>
+      ${majorRowsForJob(job)}
       <div class="tags">
         ${tags.map(reason => `<span class="tag">${escapeHtml(reason)}</span>`).join('')}
         ${job.otherConditions ? '<span class="tag warn">有其他条件</span>' : ''}
