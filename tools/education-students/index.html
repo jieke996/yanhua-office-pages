@@ -14,6 +14,14 @@
         <p class="eyebrow">Education Students</p>
         <h1>学历提升学员系统</h1>
       </div>
+      <label class="field stats-year-control">
+        <span>招生年份</span>
+        <select id="statsYear">
+          <option value="">全部</option>
+          <option value="2025">2025年</option>
+          <option value="2026" selected>2026年</option>
+        </select>
+      </label>
       <div class="topbar-actions">
         <button class="btn ghost" type="button" id="refreshBtn"><i class="fas fa-rotate"></i> 刷新</button>
         <button class="btn secondary" type="button" id="importBtn"><i class="fas fa-file-import"></i> 导入</button>
@@ -23,7 +31,7 @@
     </section>
 
     <section class="stats-grid" aria-label="学员统计">
-      <article class="stat"><span>学员总数</span><strong id="statTotal">0</strong></article>
+      <article class="stat"><span id="statTotalLabel">学员总数（2026年）</span><strong id="statTotal">0</strong></article>
       <article class="stat"><span>国开</span><strong id="statOpen">0</strong></article>
       <article class="stat"><span>成考</span><strong id="statAdult">0</strong></article>
       <article class="stat warning"><span>待复核</span><strong id="statReview">0</strong></article>

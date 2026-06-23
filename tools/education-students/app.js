@@ -83,7 +83,9 @@ function filters() {
 }
 
 async function loadStats() {
-  const data = await fetchJson(API_URL + '/stats?' + authParams());
+  const statsYear = $('statsYear')?.value || '';
+  const data = await fetchJson(API_URL + '/stats?' + authParams({ year: statsYear }));
+  $('statTotalLabel').textContent = statsYear ? `学员总数（${statsYear}年）` : '学员总数（全部）';
   $('statTotal').textContent = data.total || 0;
   $('statOpen').textContent = data.openUniversity || 0;
   $('statAdult').textContent = data.adultExam || 0;
@@ -411,15 +413,27 @@ function exportExcel() {
 }
 
 function resetFilters() {
-  ['keyword', 'businessType', 'year', 'enrollmentBatch', 'level', 'pushInstitution'].forEach(id => { $(id).value = ''; });
+  ['keyword', 'businessType', 'enrollmentBatch', 'level', 'pushInstitution'].forEach(id => { $(id).value = ''; });
+  $('statsYear').value = '2026';
+  $('year').value = '2026';
   state.page = 1;
-  loadStudents();
+  refreshAll();
 }
 
 function bindEvents() {
   $('refreshBtn').addEventListener('click', refreshAll);
   $('searchBtn').addEventListener('click', () => { state.page = 1; loadStudents(); });
   $('resetBtn').addEventListener('click', resetFilters);
+  $('statsYear').addEventListener('change', () => {
+    $('year').value = $('statsYear').value;
+    state.page = 1;
+    refreshAll();
+  });
+  $('year').addEventListener('change', () => {
+    $('statsYear').value = $('year').value;
+    state.page = 1;
+    refreshAll();
+  });
   $('createBtn').addEventListener('click', () => openForm());
   $('exportBtn').addEventListener('click', exportExcel);
   $('importBtn').addEventListener('click', () => openDrawer('importDrawer'));
@@ -454,6 +468,8 @@ function bindEvents() {
 
 window.addEventListener('DOMContentLoaded', () => {
   if (!requireAdmin()) return;
+  $('statsYear').value = '2026';
+  $('year').value = '2026';
   bindEvents();
   refreshAll();
 });
