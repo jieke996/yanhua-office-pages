@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>学历提升学员系统</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="student-shell">
+    <section class="topbar">
+      <div>
+        <p class="eyebrow">Education Students</p>
+        <h1>学历提升学员系统</h1>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn ghost" type="button" id="refreshBtn"><i class="fas fa-rotate"></i> 刷新</button>
+        <button class="btn secondary" type="button" id="importBtn"><i class="fas fa-file-import"></i> 导入</button>
+        <button class="btn secondary" type="button" id="exportBtn"><i class="fas fa-file-export"></i> 导出</button>
+        <button class="btn primary" type="button" id="createBtn"><i class="fas fa-plus"></i> 新增学员</button>
+      </div>
+    </section>
+
+    <section class="stats-grid" aria-label="学员统计">
+      <article class="stat"><span>学员总数</span><strong id="statTotal">0</strong></article>
+      <article class="stat"><span>国开</span><strong id="statOpen">0</strong></article>
+      <article class="stat"><span>成考</span><strong id="statAdult">0</strong></article>
+      <article class="stat warning"><span>待复核</span><strong id="statReview">0</strong></article>
+      <article class="stat danger"><span>回收站</span><strong id="statRecycle">0</strong></article>
+    </section>
+
+    <section class="toolbar">
+      <label class="field wide">
+        <span>关键词</span>
+        <input id="keyword" type="search" placeholder="姓名、电话、学校、专业、备注">
+      </label>
+      <label class="field">
+        <span>业务类型</span>
+        <select id="businessType">
+          <option value="">全部</option>
+          <option value="open_university">国开</option>
+          <option value="adult_exam">成考</option>
+        </select>
+      </label>
+      <label class="field small">
+        <span>年份</span>
+        <select id="year">
+          <option value="">全部</option>
+          <option value="2026">2026</option>
+          <option value="2025">2025</option>
+        </select>
+      </label>
+      <label class="field small">
+        <span>批次</span>
+        <select id="enrollmentBatch">
+          <option value="">全部</option>
+          <option value="3月">3月</option>
+          <option value="9月">9月</option>
+          <option value="待确认">待确认</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>层次</span>
+        <select id="level">
+          <option value="">全部</option>
+          <option value="高起专">高起专</option>
+          <option value="专升本">专升本</option>
+          <option value="高起本">高起本</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>推送机构</span>
+        <select id="pushInstitution">
+          <option value="">全部</option>
+          <option value="吉林牛老师">吉林牛老师</option>
+          <option value="盛世领航">盛世领航</option>
+          <option value="弘达教育">弘达教育</option>
+        </select>
+      </label>
+      <div class="toolbar-actions">
+        <button class="btn primary" type="button" id="searchBtn"><i class="fas fa-search"></i> 查询</button>
+        <button class="btn ghost" type="button" id="resetBtn"><i class="fas fa-eraser"></i> 清空</button>
+      </div>
+    </section>
+
+    <section class="tabs">
+      <button class="tab active" type="button" data-view="active">正常学员</button>
+      <button class="tab" type="button" data-view="recycle">回收站</button>
+    </section>
+
+    <section class="table-panel">
+      <div class="table-head">
+        <strong id="resultTitle">正常学员</strong>
+        <span id="resultCount">共 0 条</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>姓名</th>
+              <th>联系方式</th>
+              <th>业务</th>
+              <th>年份/批次</th>
+              <th>层次</th>
+              <th>意向专业</th>
+              <th>报考学校</th>
+              <th>推送机构</th>
+              <th>费用</th>
+              <th>成交日期</th>
+              <th>状态</th>
+              <th class="actions-col">操作</th>
+            </tr>
+          </thead>
+          <tbody id="studentsBody">
+            <tr><td colspan="12" class="empty">正在加载...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </section>
+  </main>
+
+  <section class="drawer-mask" id="studentDrawer" hidden>
+    <form class="drawer" id="studentForm">
+      <div class="drawer-head">
+        <div>
+          <p class="eyebrow">Student Form</p>
+          <h2 id="drawerTitle">新增学员</h2>
+        </div>
+        <button class="icon-btn" type="button" data-close="studentDrawer" aria-label="关闭"><i class="fas fa-xmark"></i></button>
+      </div>
+      <input type="hidden" id="studentId">
+      <div class="form-section">
+        <h3>基础信息</h3>
+        <div class="form-grid">
+          <label class="field"><span>姓名 *</span><input id="name" required></label>
+          <label class="field"><span>联系方式 *</span><input id="phone" required></label>
+          <label class="field"><span>业务类型 *</span><select id="formBusinessType" required><option value="open_university">国开</option><option value="adult_exam">成考</option></select></label>
+          <label class="field"><span>状态</span><select id="status"><option>在办</option><option>待确认</option><option>已推送</option><option>已入学</option><option>已完成</option></select></label>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>学历与报考</h3>
+        <div class="form-grid">
+          <label class="field"><span>年份 *</span><input id="formYear" type="number" min="2020" max="2100" required></label>
+          <label class="field"><span>入学批次</span><select id="formEnrollmentBatch"><option value="">无</option><option>3月</option><option>9月</option><option>待确认</option></select></label>
+          <label class="field"><span>原始学历</span><select id="originalEducation"><option value="">未填</option><option>初中</option><option>中专</option><option>高中</option><option>专科</option></select></label>
+          <label class="field"><span>目标学历 *</span><select id="targetEducation" required><option>专科</option><option>本科</option></select></label>
+          <label class="field"><span>学历层次 *</span><select id="formLevel" required><option>高起专</option><option>专升本</option><option>高起本</option></select></label>
+          <label class="field"><span>学历意向方式</span><input id="intentionMethod"></label>
+          <label class="field"><span>原学校</span><input id="originalSchool"></label>
+          <label class="field"><span>原专业</span><input id="originalMajor"></label>
+          <label class="field"><span>意向专业 *</span><input id="intendedMajor" required></label>
+          <label class="field"><span>报考学校 *</span><input id="applySchool" required></label>
+          <label class="field"><span>推送机构</span><select id="formPushInstitution"><option value="">无</option><option>吉林牛老师</option><option>盛世领航</option><option>弘达教育</option></select></label>
+          <label class="field"><span>成交日期</span><input id="dealDate" type="date"></label>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>费用与备注</h3>
+        <div class="form-grid">
+          <label class="field"><span>报名费</span><input id="registrationFee" type="number" min="0" step="0.01"></label>
+          <label class="field"><span>尾款</span><input id="finalPayment" type="number" min="0" step="0.01"></label>
+        </div>
+        <label class="field full"><span>备注</span><textarea id="remark" rows="4"></textarea></label>
+      </div>
+      <div class="drawer-actions">
+        <button class="btn ghost" type="button" data-close="studentDrawer">取消</button>
+        <button class="btn primary" type="submit">保存学员</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="drawer-mask" id="importDrawer" hidden>
+    <div class="drawer import-drawer">
+      <div class="drawer-head">
+        <div>
+          <p class="eyebrow">Excel Import</p>
+          <h2>导入学员</h2>
+        </div>
+        <button class="icon-btn" type="button" data-close="importDrawer" aria-label="关闭"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="form-grid import-grid">
+        <label class="field"><span>业务类型</span><select id="importBusinessType"><option value="open_university">国开</option><option value="adult_exam">成考</option></select></label>
+        <label class="field"><span>年份</span><input id="importYear" type="number" value="2026"></label>
+        <label class="field"><span>国开批次</span><select id="importBatch"><option value="">待确认</option><option>3月</option><option>9月</option></select></label>
+        <label class="field"><span>重复处理</span><select id="duplicateStrategy"><option value="skip">跳过重复</option><option value="update">覆盖重复</option><option value="merge">合并备注</option></select></label>
+      </div>
+      <label class="upload-box" for="importFile">
+        <i class="fas fa-cloud-arrow-up"></i>
+        <strong id="fileLabel">选择 Excel 文件</strong>
+        <span>支持 2025/2026 国开、成考信息表</span>
+      </label>
+      <input id="importFile" type="file" accept=".xlsx,.xls" hidden>
+      <div class="import-actions">
+        <button class="btn secondary" type="button" id="previewImportBtn">生成预览</button>
+        <button class="btn primary" type="button" id="commitImportBtn" disabled>确认导入</button>
+      </div>
+      <div class="import-summary" id="importSummary"></div>
+      <div class="preview-table" id="importPreview"></div>
+    </div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../../config.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
