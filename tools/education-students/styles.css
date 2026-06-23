@@ -85,10 +85,11 @@ h1 { font-size: 28px; }
 .table-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); }
 .table-head span { color: var(--muted); font-weight: 800; }
 .table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; min-width: 1180px; }
+table { width: 100%; border-collapse: collapse; min-width: 1240px; }
 th, td { padding: 12px 10px; border-bottom: 1px solid #edf3fb; text-align: left; vertical-align: top; font-size: 14px; }
 th { color: #536981; background: #f7faff; font-size: 12px; font-weight: 900; white-space: nowrap; }
 td { line-height: 1.55; }
+.index-col { width: 58px; color: var(--muted); font-weight: 900; text-align: center; }
 .actions-col { width: 168px; }
 .empty { text-align: center; color: var(--muted); padding: 42px 12px; }
 .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }

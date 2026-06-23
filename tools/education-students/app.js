@@ -122,11 +122,13 @@ function renderStudents() {
   $('resultCount').textContent = `共 ${state.total} 条`;
   const body = $('studentsBody');
   if (!state.items.length) {
-    body.innerHTML = '<tr><td colspan="12" class="empty">暂无学员数据</td></tr>';
+    body.innerHTML = '<tr><td colspan="13" class="empty">暂无学员数据</td></tr>';
     return;
   }
-  body.innerHTML = state.items.map(item => `
+  const startIndex = (state.page - 1) * state.pageSize;
+  body.innerHTML = state.items.map((item, index) => `
     <tr>
+      <td class="index-col">${startIndex + index + 1}</td>
       <td><span class="strong">${escapeHtml(item.name)}</span>${renderFlags(item.reviewFlags)}</td>
       <td>${escapeHtml(item.phone)}</td>
       <td><span class="tag ${item.businessType === 'open_university' ? 'green' : 'orange'}">${escapeHtml(item.businessLabel)}</span></td>
