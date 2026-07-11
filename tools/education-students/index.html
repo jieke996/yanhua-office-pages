@@ -213,9 +213,9 @@
         <div class="form-grid">
           <label class="field"><span>应参加考试次数</span><select id="examRequiredCountForm"><option value="0">待确认</option><option value="1">需 1 次</option><option value="2">需 2 次</option></select></label>
           <label class="field exam-once-field"><span>第一次考试状态</span><select id="examFirstStatus"><option value="not_notified">未通知</option><option value="notified">已通知</option><option value="completed">已完成</option></select></label>
-          <label class="field exam-once-field"><span>第一次考试日期</span><input id="examFirstDate" type="date"></label>
+          <div class="field exam-once-field date-group-field"><span>第一次考试日期</span><div class="date-add-row"><input id="examFirstDateInput" type="date"><button class="mini-btn primary" type="button" id="addExamFirstDateBtn">添加</button></div><div class="date-chip-list" id="examFirstDatesList"></div></div>
           <label class="field exam-twice-field"><span>第二次考试状态</span><select id="examSecondStatus"><option value="not_notified">未通知</option><option value="notified">已通知</option><option value="completed">已完成</option></select></label>
-          <label class="field exam-twice-field"><span>第二次考试日期</span><input id="examSecondDate" type="date"></label>
+          <div class="field exam-twice-field date-group-field"><span>第二次考试日期</span><div class="date-add-row"><input id="examSecondDateInput" type="date"><button class="mini-btn primary" type="button" id="addExamSecondDateBtn">添加</button></div><div class="date-chip-list" id="examSecondDatesList"></div></div>
         </div>
         <label class="field full"><span>考试备注</span><textarea id="examRemark" rows="3" placeholder="考试地点、特殊情况、补考说明"></textarea></label>
       </div>

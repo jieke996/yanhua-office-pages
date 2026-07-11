@@ -11,6 +11,8 @@ let state = {
   total: 0,
   items: [],
   studentFiles: [],
+  examFirstDates: [],
+  examSecondDates: [],
   importRows: [],
   importFileName: ''
 };
@@ -137,6 +139,15 @@ function localDateString(offsetDays = 0) {
   return `${y}-${m}-${d}`;
 }
 
+function normalizeDates(values) {
+  const source = Array.isArray(values) ? values : [values];
+  return [...new Set(source.flatMap(value => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string' && value.includes('、')) return value.split('、');
+    return [value];
+  }).map(value => String(value || '').trim()).filter(Boolean))].sort();
+}
+
 function examStatusClass(status) {
   if (status === 'completed') return 'green';
   if (status === 'notified') return 'blue';
@@ -144,25 +155,27 @@ function examStatusClass(status) {
 }
 
 function examDateMeta(item) {
-  return examSingleDateMeta(item.examFirstDate, item.examFirstStatus, '一试');
+  return examSingleDateMeta(item.examFirstDates?.length ? item.examFirstDates : item.examFirstDate, item.examFirstStatus, '一试');
 }
 
-function examSingleDateMeta(date, status, label) {
-  if (!date) return `<div class="exam-meta">${label}待安排</div>`;
-  if (status === 'completed') return `<div class="exam-meta">${label} ${escapeHtml(date)}</div>`;
+function examSingleDateMeta(dateValue, status, label) {
+  const dates = normalizeDates(dateValue);
+  if (!dates.length) return `<div class="exam-meta">${label}待安排</div>`;
+  const shown = dates.length > 3 ? `${dates.slice(0, 3).join('、')} 等 ${dates.length} 天` : dates.join('、');
+  if (status === 'completed') return `<div class="exam-meta">${label} ${escapeHtml(shown)}</div>`;
   const today = localDateString();
   const next7days = localDateString(7);
-  if (date < today) return `<div class="exam-meta danger">${label} ${escapeHtml(date)} 已逾期</div>`;
-  if (date <= next7days) return `<div class="exam-meta warning">${label} ${escapeHtml(date)} 近期考试</div>`;
-  return `<div class="exam-meta">${label} ${escapeHtml(date)}</div>`;
+  if (dates.some(date => date < today)) return `<div class="exam-meta danger">${label} ${escapeHtml(shown)} 已逾期</div>`;
+  if (dates.some(date => date <= next7days)) return `<div class="exam-meta warning">${label} ${escapeHtml(shown)} 近期考试</div>`;
+  return `<div class="exam-meta">${label} ${escapeHtml(shown)}</div>`;
 }
 
 function renderExamPlan(item) {
   if (item.businessType !== 'open_university') return '<span class="muted">-</span>';
   const required = Number(item.examRequiredCount || 0);
   if (!required) return '<div class="exam-cell"><span class="tag gray">待确认</span><div class="exam-meta">待确认考试次数</div></div>';
-  const dates = [examSingleDateMeta(item.examFirstDate, item.examFirstStatus, '一试')];
-  if (required >= 2) dates.push(examSingleDateMeta(item.examSecondDate, item.examSecondStatus, '二试'));
+  const dates = [examSingleDateMeta(item.examFirstDates?.length ? item.examFirstDates : item.examFirstDate, item.examFirstStatus, '一试')];
+  if (required >= 2) dates.push(examSingleDateMeta(item.examSecondDates?.length ? item.examSecondDates : item.examSecondDate, item.examSecondStatus, '二试'));
   return `<div class="exam-cell"><span class="tag">需 ${required} 次</span>${dates.join('')}</div>`;
 }
 
@@ -273,12 +286,49 @@ function syncExamFields() {
   document.querySelectorAll('.exam-twice-field').forEach(node => { node.style.display = required >= 2 ? 'grid' : 'none'; });
   if (required < 1) {
     $('examFirstStatus').value = 'not_notified';
-    $('examFirstDate').value = '';
+    state.examFirstDates = [];
   }
   if (required < 2) {
     $('examSecondStatus').value = 'not_notified';
-    $('examSecondDate').value = '';
+    state.examSecondDates = [];
   }
+  renderExamDateLists();
+}
+
+function renderDateChips(target, dates, removeFn) {
+  const list = $(target);
+  if (!dates.length) {
+    list.innerHTML = '<span class="date-empty">待安排</span>';
+    return;
+  }
+  list.innerHTML = dates.map(date => `
+    <span class="date-chip">${escapeHtml(date)}<button type="button" onclick="${removeFn}('${escapeHtml(date)}')" aria-label="删除日期">×</button></span>
+  `).join('');
+}
+
+function renderExamDateLists() {
+  renderDateChips('examFirstDatesList', state.examFirstDates, 'removeExamFirstDate');
+  renderDateChips('examSecondDatesList', state.examSecondDates, 'removeExamSecondDate');
+}
+
+function addExamDate(kind) {
+  const input = kind === 'first' ? $('examFirstDateInput') : $('examSecondDateInput');
+  const date = input.value;
+  if (!date) return showToast('请先选择考试日期');
+  const key = kind === 'first' ? 'examFirstDates' : 'examSecondDates';
+  state[key] = normalizeDates([...state[key], date]);
+  input.value = '';
+  renderExamDateLists();
+}
+
+function removeExamFirstDate(date) {
+  state.examFirstDates = state.examFirstDates.filter(item => item !== date);
+  renderExamDateLists();
+}
+
+function removeExamSecondDate(date) {
+  state.examSecondDates = state.examSecondDates.filter(item => item !== date);
+  renderExamDateLists();
 }
 
 function openForm(id = null) {
@@ -305,9 +355,9 @@ function openForm(id = null) {
   $('finalPayment').value = item?.finalPayment ?? '';
   $('examRequiredCountForm').value = String(item?.examRequiredCount || 0);
   $('examFirstStatus').value = item?.examFirstStatus || 'not_notified';
-  $('examFirstDate').value = item?.examFirstDate || '';
+  state.examFirstDates = normalizeDates(item?.examFirstDates?.length ? item.examFirstDates : item?.examFirstDate);
   $('examSecondStatus').value = item?.examSecondStatus || 'not_notified';
-  $('examSecondDate').value = item?.examSecondDate || '';
+  state.examSecondDates = normalizeDates(item?.examSecondDates?.length ? item.examSecondDates : item?.examSecondDate);
   $('examRemark').value = item?.examRemark || '';
   $('remark').value = item?.remark || '';
   toggleBusinessFields();
@@ -343,9 +393,11 @@ function formPayload() {
   if (payload.businessType === 'open_university') {
     payload.examRequiredCount = $('examRequiredCountForm').value;
     payload.examFirstStatus = $('examFirstStatus').value;
-    payload.examFirstDate = $('examFirstDate').value;
+    payload.examFirstDates = state.examFirstDates;
+    payload.examFirstDate = state.examFirstDates[0] || '';
     payload.examSecondStatus = $('examSecondStatus').value;
-    payload.examSecondDate = $('examSecondDate').value;
+    payload.examSecondDates = state.examSecondDates;
+    payload.examSecondDate = state.examSecondDates[0] || '';
     payload.examRemark = $('examRemark').value.trim();
   }
   return payload;
@@ -355,8 +407,8 @@ function validateExamPayload(payload) {
   if (payload.businessType !== 'open_university') return true;
   const required = Number(payload.examRequiredCount || 0);
   if (!required) return true;
-  if (required >= 1 && payload.examFirstStatus === 'completed' && !payload.examFirstDate) return confirm('第一次考试已完成但未填写日期，仍然保存吗？');
-  if (required >= 2 && payload.examSecondStatus === 'completed' && !payload.examSecondDate) return confirm('第二次考试已完成但未填写日期，仍然保存吗？');
+  if (required >= 1 && payload.examFirstStatus === 'completed' && !payload.examFirstDates.length) return confirm('第一次考试已完成但未填写日期，仍然保存吗？');
+  if (required >= 2 && payload.examSecondStatus === 'completed' && !payload.examSecondDates.length) return confirm('第二次考试已完成但未填写日期，仍然保存吗？');
   return true;
 }
 
@@ -645,6 +697,8 @@ function bindEvents() {
     syncExamFields();
   });
   $('examRequiredCountForm').addEventListener('change', syncExamFields);
+  $('addExamFirstDateBtn').addEventListener('click', () => addExamDate('first'));
+  $('addExamSecondDateBtn').addEventListener('click', () => addExamDate('second'));
   $('uploadStudentFileBtn').addEventListener('click', uploadStudentFile);
   $('originalEducation').addEventListener('change', inferLevel);
   $('targetEducation').addEventListener('change', inferLevel);

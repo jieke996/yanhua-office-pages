@@ -166,6 +166,30 @@ td { line-height: 1.55; }
 }
 .student-file-item:last-child { border-bottom: 0; }
 .empty.compact { padding: 18px 12px; }
+.date-add-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.date-chip-list { display: flex; flex-wrap: wrap; gap: 7px; min-height: 28px; align-items: center; }
+.date-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 7px;
+  background: #eef5ff;
+  color: #2164c4;
+  font-size: 12px;
+  font-weight: 900;
+}
+.date-chip button {
+  border: 0;
+  background: transparent;
+  color: #6c7f95;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0;
+}
+.date-empty { color: var(--muted); font-size: 12px; font-weight: 800; }
 
 .import-drawer { width: min(980px, 100%); }
 .import-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -218,7 +242,7 @@ td { line-height: 1.55; }
   h1 { font-size: 23px; }
   .topbar-actions, .toolbar-actions, .drawer-actions, .import-actions { width: 100%; }
   .btn { flex: 1; }
-  .stats-grid, .toolbar, .form-grid, .import-grid, .file-upload-row { grid-template-columns: 1fr; }
+  .stats-grid, .toolbar, .form-grid, .import-grid, .file-upload-row, .date-add-row { grid-template-columns: 1fr; }
   .student-file-item { align-items: flex-start; flex-direction: column; }
   .drawer { padding: 18px; }
   .table-head { align-items: flex-start; flex-direction: column; gap: 4px; }
