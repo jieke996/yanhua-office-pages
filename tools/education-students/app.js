@@ -204,8 +204,8 @@ function renderStudents() {
   const startIndex = (state.page - 1) * state.pageSize;
   body.innerHTML = state.items.map((item, index) => `
     <tr>
-      <td class="index-col">${startIndex + index + 1}</td>
-      <td><span class="strong">${escapeHtml(item.name)}</span>${renderFlags(item.reviewFlags)}</td>
+      <td class="index-col sticky-index-col">${startIndex + index + 1}</td>
+      <td class="sticky-name-col"><span class="strong">${escapeHtml(item.name)}</span>${renderFlags(item.reviewFlags)}</td>
       <td>${escapeHtml(item.phone)}</td>
       <td><span class="tag ${item.businessType === 'open_university' ? 'green' : 'orange'}">${escapeHtml(item.businessLabel)}</span></td>
       <td>${escapeHtml(item.year || '-')}${item.enrollmentBatch ? `<div class="muted">${escapeHtml(item.enrollmentBatch)}</div>` : ''}</td>
