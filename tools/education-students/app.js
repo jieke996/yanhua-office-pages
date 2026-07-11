@@ -11,6 +11,7 @@ let state = {
   total: 0,
   items: [],
   studentFiles: [],
+  studentFilesStudentId: '',
   examFirstDates: [],
   examSecondDates: [],
   importRows: [],
@@ -360,6 +361,7 @@ function openForm(id = null) {
   state.examSecondDates = normalizeDates(item?.examSecondDates?.length ? item.examSecondDates : item?.examSecondDate);
   $('examRemark').value = item?.examRemark || '';
   $('remark').value = item?.remark || '';
+  resetStudentFileUpload();
   toggleBusinessFields();
   syncExamFields();
   loadStudentFiles(item?.id || null);
@@ -498,7 +500,14 @@ function renderStudentFiles() {
   `).join('');
 }
 
+function resetStudentFileUpload() {
+  $('studentFileInput').value = '';
+  $('studentFileRemark').value = '';
+}
+
 async function loadStudentFiles(studentId) {
+  const requestedStudentId = String(studentId || '');
+  state.studentFilesStudentId = requestedStudentId;
   state.studentFiles = [];
   if (!studentId) {
     renderStudentFiles();
@@ -506,10 +515,12 @@ async function loadStudentFiles(studentId) {
   }
   try {
     const data = await fetchJson(`${API_URL}/${studentId}/files?` + authParams());
+    if (state.studentFilesStudentId !== requestedStudentId || $('studentId').value !== requestedStudentId) return;
     state.studentFiles = data.items || [];
   } catch (error) {
-    showToast(error.message);
+    if (state.studentFilesStudentId === requestedStudentId && $('studentId').value === requestedStudentId) showToast(error.message);
   }
+  if (state.studentFilesStudentId !== requestedStudentId || $('studentId').value !== requestedStudentId) return;
   renderStudentFiles();
 }
 
@@ -528,8 +539,7 @@ async function uploadStudentFile() {
     });
     const result = await response.json();
     if (!response.ok || result.success === false) throw new Error(result.message || '上传失败');
-    $('studentFileInput').value = '';
-    $('studentFileRemark').value = '';
+    resetStudentFileUpload();
     showToast('资料已上传');
     loadStudentFiles(studentId);
   } catch (error) {
