@@ -10,6 +10,7 @@ let state = {
   pageSize: 20,
   total: 0,
   items: [],
+  studentFiles: [],
   importRows: [],
   importFileName: ''
 };
@@ -77,6 +78,10 @@ function filters() {
     enrollmentBatch: $('enrollmentBatch').value,
     level: $('level').value,
     pushInstitution: $('pushInstitution').value,
+    examRequiredCount: $('examRequiredCount').value,
+    examStatus: $('examStatus').value,
+    examCompletion: $('examCompletion').value,
+    examDateRange: $('examDateRange').value,
     page: state.page,
     pageSize: state.pageSize
   };
@@ -91,6 +96,10 @@ async function loadStats() {
   $('statAdult').textContent = data.adultExam || 0;
   $('statReview').textContent = data.review || 0;
   $('statRecycle').textContent = data.recycle || 0;
+  $('statExamPending').textContent = data.examPendingNotice || 0;
+  $('statExamNotified').textContent = data.examNotifiedIncomplete || 0;
+  $('statExamUpcoming').textContent = data.examUpcoming || 0;
+  $('statExamOverdue').textContent = data.examOverdue || 0;
 }
 
 async function loadStudents() {
@@ -119,12 +128,63 @@ function money(value) {
   return Number.isFinite(number) ? number.toLocaleString('zh-CN', { maximumFractionDigits: 2 }) : String(value);
 }
 
+function localDateString(offsetDays = 0) {
+  const date = new Date();
+  date.setDate(date.getDate() + offsetDays);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function examStatusClass(status) {
+  if (status === 'completed') return 'green';
+  if (status === 'notified') return 'blue';
+  return 'gray';
+}
+
+function examDateMeta(item) {
+  return examSingleDateMeta(item.examFirstDate, item.examFirstStatus, '一试');
+}
+
+function examSingleDateMeta(date, status, label) {
+  if (!date) return `<div class="exam-meta">${label}待安排</div>`;
+  if (status === 'completed') return `<div class="exam-meta">${label} ${escapeHtml(date)}</div>`;
+  const today = localDateString();
+  const next7days = localDateString(7);
+  if (date < today) return `<div class="exam-meta danger">${label} ${escapeHtml(date)} 已逾期</div>`;
+  if (date <= next7days) return `<div class="exam-meta warning">${label} ${escapeHtml(date)} 近期考试</div>`;
+  return `<div class="exam-meta">${label} ${escapeHtml(date)}</div>`;
+}
+
+function renderExamPlan(item) {
+  if (item.businessType !== 'open_university') return '<span class="muted">-</span>';
+  const required = Number(item.examRequiredCount || 0);
+  if (!required) return '<div class="exam-cell"><span class="tag gray">待确认</span><div class="exam-meta">待确认考试次数</div></div>';
+  const dates = [examSingleDateMeta(item.examFirstDate, item.examFirstStatus, '一试')];
+  if (required >= 2) dates.push(examSingleDateMeta(item.examSecondDate, item.examSecondStatus, '二试'));
+  return `<div class="exam-cell"><span class="tag">需 ${required} 次</span>${dates.join('')}</div>`;
+}
+
+function renderExamProgress(item) {
+  if (item.businessType !== 'open_university') return '<span class="muted">-</span>';
+  const required = Number(item.examRequiredCount || 0);
+  if (!required) return '<div class="exam-cell"><span class="strong">待确认</span><div class="exam-meta">完成次数可为空</div></div>';
+  const completed = Number(item.examCompletedCount || 0);
+  const second = required >= 2 ? `<div class="exam-meta"><span class="tag ${examStatusClass(item.examSecondStatus)}">二试 ${escapeHtml(item.examSecondStatusLabel || '未通知')}</span></div>` : '';
+  return `<div class="exam-cell">
+    <span class="strong">${completed}/${required}</span>
+    <div class="exam-meta"><span class="tag ${examStatusClass(item.examFirstStatus)}">一试 ${escapeHtml(item.examFirstStatusLabel || '未通知')}</span></div>
+    ${second}
+  </div>`;
+}
+
 function renderStudents() {
   $('resultTitle').textContent = state.view === 'recycle' ? '回收站' : '正常学员';
   $('resultCount').textContent = `共 ${state.total} 条`;
   const body = $('studentsBody');
   if (!state.items.length) {
-    body.innerHTML = '<tr><td colspan="13" class="empty">暂无学员数据</td></tr>';
+    body.innerHTML = '<tr><td colspan="15" class="empty">暂无学员数据</td></tr>';
     return;
   }
   const startIndex = (state.page - 1) * state.pageSize;
@@ -139,6 +199,8 @@ function renderStudents() {
       <td>${escapeHtml(item.intendedMajor || '-')}</td>
       <td>${escapeHtml(item.applySchool || '-')}</td>
       <td>${item.pushInstitution ? `<span class="tag">${escapeHtml(item.pushInstitution)}</span>` : '<span class="muted">-</span>'}</td>
+      <td>${renderExamPlan(item)}</td>
+      <td>${renderExamProgress(item)}</td>
       <td>报名 ${money(item.registrationFee)}<div class="muted">尾款 ${money(item.finalPayment)}</div></td>
       <td>${escapeHtml(item.dealDate || '-')}</td>
       <td><span class="tag">${escapeHtml(item.status || '-')}</span></td>
@@ -202,6 +264,21 @@ function toggleBusinessFields() {
   $('finalPayment').closest('.field').style.display = isOpen ? 'none' : 'grid';
   $('formPushInstitution').closest('.field').style.display = isOpen ? 'grid' : 'none';
   $('formEnrollmentBatch').closest('.field').style.display = isOpen ? 'grid' : 'none';
+  $('examSection').style.display = isOpen ? 'block' : 'none';
+}
+
+function syncExamFields() {
+  const required = Number($('examRequiredCountForm').value || 0);
+  document.querySelectorAll('.exam-once-field').forEach(node => { node.style.display = required >= 1 ? 'grid' : 'none'; });
+  document.querySelectorAll('.exam-twice-field').forEach(node => { node.style.display = required >= 2 ? 'grid' : 'none'; });
+  if (required < 1) {
+    $('examFirstStatus').value = 'not_notified';
+    $('examFirstDate').value = '';
+  }
+  if (required < 2) {
+    $('examSecondStatus').value = 'not_notified';
+    $('examSecondDate').value = '';
+  }
 }
 
 function openForm(id = null) {
@@ -211,7 +288,7 @@ function openForm(id = null) {
   $('name').value = item?.name || '';
   $('phone').value = item?.phone || '';
   $('formBusinessType').value = item?.businessType || 'open_university';
-  $('status').value = item?.status || '在办';
+  $('status').value = item?.status || '在读';
   $('formYear').value = item?.year || new Date().getFullYear();
   $('formEnrollmentBatch').value = item?.enrollmentBatch || '';
   $('originalEducation').value = item?.originalEducation || '';
@@ -226,13 +303,21 @@ function openForm(id = null) {
   $('dealDate').value = item?.dealDate || '';
   $('registrationFee').value = item?.registrationFee ?? '';
   $('finalPayment').value = item?.finalPayment ?? '';
+  $('examRequiredCountForm').value = String(item?.examRequiredCount || 0);
+  $('examFirstStatus').value = item?.examFirstStatus || 'not_notified';
+  $('examFirstDate').value = item?.examFirstDate || '';
+  $('examSecondStatus').value = item?.examSecondStatus || 'not_notified';
+  $('examSecondDate').value = item?.examSecondDate || '';
+  $('examRemark').value = item?.examRemark || '';
   $('remark').value = item?.remark || '';
   toggleBusinessFields();
+  syncExamFields();
+  loadStudentFiles(item?.id || null);
   openDrawer('studentDrawer');
 }
 
 function formPayload() {
-  return {
+  const payload = {
     role: currentUser.role,
     username: currentUser.username,
     name: $('name').value.trim(),
@@ -255,12 +340,31 @@ function formPayload() {
     finalPayment: $('finalPayment').value,
     remark: $('remark').value.trim()
   };
+  if (payload.businessType === 'open_university') {
+    payload.examRequiredCount = $('examRequiredCountForm').value;
+    payload.examFirstStatus = $('examFirstStatus').value;
+    payload.examFirstDate = $('examFirstDate').value;
+    payload.examSecondStatus = $('examSecondStatus').value;
+    payload.examSecondDate = $('examSecondDate').value;
+    payload.examRemark = $('examRemark').value.trim();
+  }
+  return payload;
+}
+
+function validateExamPayload(payload) {
+  if (payload.businessType !== 'open_university') return true;
+  const required = Number(payload.examRequiredCount || 0);
+  if (!required) return true;
+  if (required >= 1 && payload.examFirstStatus === 'completed' && !payload.examFirstDate) return confirm('第一次考试已完成但未填写日期，仍然保存吗？');
+  if (required >= 2 && payload.examSecondStatus === 'completed' && !payload.examSecondDate) return confirm('第二次考试已完成但未填写日期，仍然保存吗？');
+  return true;
 }
 
 async function saveStudent(event) {
   event.preventDefault();
   const id = $('studentId').value;
   const payload = formPayload();
+  if (!validateExamPayload(payload)) return;
   try {
     if (id) {
       await fetchJson(API_URL + '/' + id + '?' + authParams(), { method: 'PUT', body: JSON.stringify(payload) });
@@ -299,6 +403,101 @@ async function restoreStudent(id) {
     });
     showToast('已恢复');
     refreshAll();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+function formatFileSize(bytes) {
+  const size = Number(bytes || 0);
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  if (size < 1024 * 1024 * 1024) return `${(size / 1024 / 1024).toFixed(1)} MB`;
+  return `${(size / 1024 / 1024 / 1024).toFixed(1)} GB`;
+}
+
+function renderStudentFiles() {
+  const list = $('studentFileList');
+  const studentId = $('studentId').value;
+  $('studentFileHelp').textContent = studentId
+    ? '支持 Word、PDF、PPT、Excel；每次上传一个文件，删除后文件仍保留在服务器备份目录。'
+    : '新建学员需先保存后再上传资料。';
+  $('uploadStudentFileBtn').disabled = !studentId;
+  if (!studentId) {
+    list.innerHTML = '<div class="empty compact">保存学员后可上传资料</div>';
+    return;
+  }
+  if (!state.studentFiles.length) {
+    list.innerHTML = '<div class="empty compact">暂无资料文件</div>';
+    return;
+  }
+  list.innerHTML = state.studentFiles.map(file => `
+    <div class="student-file-item">
+      <div>
+        <strong>${escapeHtml(file.originalName)}</strong>
+        <div class="muted">${formatFileSize(file.fileSize)} · ${escapeHtml(file.uploadedBy || '-')} · ${escapeHtml((file.uploadedAt || '').slice(0, 16).replace('T', ' '))}</div>
+        ${file.remark ? `<div class="exam-meta">${escapeHtml(file.remark)}</div>` : ''}
+      </div>
+      <div class="row-actions">
+        <button class="mini-btn primary" type="button" onclick="downloadStudentFile(${file.id})">下载</button>
+        <button class="mini-btn danger" type="button" onclick="deleteStudentFile(${file.id})">删除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadStudentFiles(studentId) {
+  state.studentFiles = [];
+  if (!studentId) {
+    renderStudentFiles();
+    return;
+  }
+  try {
+    const data = await fetchJson(`${API_URL}/${studentId}/files?` + authParams());
+    state.studentFiles = data.items || [];
+  } catch (error) {
+    showToast(error.message);
+  }
+  renderStudentFiles();
+}
+
+async function uploadStudentFile() {
+  const studentId = $('studentId').value;
+  const file = $('studentFileInput').files[0];
+  if (!studentId) return showToast('请先保存学员后再上传资料');
+  if (!file) return showToast('请先选择资料文件');
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('remark', $('studentFileRemark').value.trim());
+  try {
+    const response = await fetch(`${API_URL}/${studentId}/files?` + authParams(), {
+      method: 'POST',
+      body: formData
+    });
+    const result = await response.json();
+    if (!response.ok || result.success === false) throw new Error(result.message || '上传失败');
+    $('studentFileInput').value = '';
+    $('studentFileRemark').value = '';
+    showToast('资料已上传');
+    loadStudentFiles(studentId);
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+function downloadStudentFile(fileId) {
+  const studentId = $('studentId').value;
+  if (!studentId) return;
+  window.location.href = `${API_URL}/${studentId}/files/${fileId}/download?` + authParams();
+}
+
+async function deleteStudentFile(fileId) {
+  const studentId = $('studentId').value;
+  if (!studentId || !confirm('确认删除该资料记录吗？服务器文件会保留用于备份恢复。')) return;
+  try {
+    await fetchJson(`${API_URL}/${studentId}/files/${fileId}?` + authParams(), { method: 'DELETE' });
+    showToast('资料记录已删除');
+    loadStudentFiles(studentId);
   } catch (error) {
     showToast(error.message);
   }
@@ -413,7 +612,10 @@ function exportExcel() {
 }
 
 function resetFilters() {
-  ['keyword', 'businessType', 'enrollmentBatch', 'level', 'pushInstitution'].forEach(id => { $(id).value = ''; });
+  [
+    'keyword', 'businessType', 'enrollmentBatch', 'level', 'pushInstitution',
+    'examRequiredCount', 'examStatus', 'examCompletion', 'examDateRange'
+  ].forEach(id => { $(id).value = ''; });
   $('statsYear').value = '2026';
   $('year').value = '2026';
   state.page = 1;
@@ -438,7 +640,12 @@ function bindEvents() {
   $('exportBtn').addEventListener('click', exportExcel);
   $('importBtn').addEventListener('click', () => openDrawer('importDrawer'));
   $('studentForm').addEventListener('submit', saveStudent);
-  $('formBusinessType').addEventListener('change', toggleBusinessFields);
+  $('formBusinessType').addEventListener('change', () => {
+    toggleBusinessFields();
+    syncExamFields();
+  });
+  $('examRequiredCountForm').addEventListener('change', syncExamFields);
+  $('uploadStudentFileBtn').addEventListener('click', uploadStudentFile);
   $('originalEducation').addEventListener('change', inferLevel);
   $('targetEducation').addEventListener('change', inferLevel);
   $('previewImportBtn').addEventListener('click', previewImport);

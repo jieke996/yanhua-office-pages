@@ -36,6 +36,10 @@
       <article class="stat"><span>成考</span><strong id="statAdult">0</strong></article>
       <article class="stat warning"><span>待复核</span><strong id="statReview">0</strong></article>
       <article class="stat danger"><span>回收站</span><strong id="statRecycle">0</strong></article>
+      <article class="stat exam"><span>待通知</span><strong id="statExamPending">0</strong></article>
+      <article class="stat exam"><span>已通知未完成</span><strong id="statExamNotified">0</strong></article>
+      <article class="stat warning"><span>近期考试</span><strong id="statExamUpcoming">0</strong></article>
+      <article class="stat danger"><span>逾期未完成</span><strong id="statExamOverdue">0</strong></article>
     </section>
 
     <section class="toolbar">
@@ -90,6 +94,42 @@
         <button class="btn primary" type="button" id="searchBtn"><i class="fas fa-search"></i> 查询</button>
         <button class="btn ghost" type="button" id="resetBtn"><i class="fas fa-eraser"></i> 清空</button>
       </div>
+      <div class="exam-filter-title">国开考试筛选</div>
+      <label class="field">
+        <span>考试次数</span>
+        <select id="examRequiredCount">
+          <option value="">全部</option>
+          <option value="unknown">待确认</option>
+          <option value="1">需 1 次</option>
+          <option value="2">需 2 次</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>考试状态</span>
+        <select id="examStatus">
+          <option value="">全部</option>
+          <option value="not_notified">未通知</option>
+          <option value="notified">已通知</option>
+          <option value="completed">已完成</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>完成情况</span>
+        <select id="examCompletion">
+          <option value="">全部</option>
+          <option value="incomplete">未完成</option>
+          <option value="completed">已完成</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>考试日期</span>
+        <select id="examDateRange">
+          <option value="">全部</option>
+          <option value="today">今日</option>
+          <option value="next7days">7 天内</option>
+          <option value="overdue">已逾期</option>
+        </select>
+      </label>
     </section>
 
     <section class="tabs">
@@ -115,6 +155,8 @@
               <th>意向专业</th>
               <th>报考学校</th>
               <th>推送机构</th>
+              <th>考试安排</th>
+              <th>考试进度</th>
               <th>费用</th>
               <th>成交日期</th>
               <th>状态</th>
@@ -122,7 +164,7 @@
             </tr>
           </thead>
           <tbody id="studentsBody">
-            <tr><td colspan="13" class="empty">正在加载...</td></tr>
+            <tr><td colspan="15" class="empty">正在加载...</td></tr>
           </tbody>
         </table>
       </div>
@@ -146,7 +188,7 @@
           <label class="field"><span>姓名 *</span><input id="name" required></label>
           <label class="field"><span>联系方式 *</span><input id="phone" required></label>
           <label class="field"><span>业务类型 *</span><select id="formBusinessType" required><option value="open_university">国开</option><option value="adult_exam">成考</option></select></label>
-          <label class="field"><span>状态</span><select id="status"><option>在办</option><option>待确认</option><option>已推送</option><option>已入学</option><option>已完成</option></select></label>
+          <label class="field"><span>状态</span><select id="status"><option>在读</option><option>待确认</option><option>已推送</option><option>已入学</option><option>已完成</option></select></label>
         </div>
       </div>
       <div class="form-section">
@@ -165,6 +207,27 @@
           <label class="field"><span>推送机构</span><select id="formPushInstitution"><option value="">无</option><option>吉林牛老师</option><option>盛世领航</option><option>弘达教育</option></select></label>
           <label class="field"><span>成交日期</span><input id="dealDate" type="date"></label>
         </div>
+      </div>
+      <div class="form-section" id="examSection">
+        <h3>国开线下考试</h3>
+        <div class="form-grid">
+          <label class="field"><span>应参加考试次数</span><select id="examRequiredCountForm"><option value="0">待确认</option><option value="1">需 1 次</option><option value="2">需 2 次</option></select></label>
+          <label class="field exam-once-field"><span>第一次考试状态</span><select id="examFirstStatus"><option value="not_notified">未通知</option><option value="notified">已通知</option><option value="completed">已完成</option></select></label>
+          <label class="field exam-once-field"><span>第一次考试日期</span><input id="examFirstDate" type="date"></label>
+          <label class="field exam-twice-field"><span>第二次考试状态</span><select id="examSecondStatus"><option value="not_notified">未通知</option><option value="notified">已通知</option><option value="completed">已完成</option></select></label>
+          <label class="field exam-twice-field"><span>第二次考试日期</span><input id="examSecondDate" type="date"></label>
+        </div>
+        <label class="field full"><span>考试备注</span><textarea id="examRemark" rows="3" placeholder="考试地点、特殊情况、补考说明"></textarea></label>
+      </div>
+      <div class="form-section" id="studentFilesSection">
+        <h3>学员资料</h3>
+        <div class="file-upload-row">
+          <label class="field file-field"><span>资料文件</span><input id="studentFileInput" type="file" accept=".doc,.docx,.pdf,.ppt,.pptx,.xls,.xlsx"></label>
+          <label class="field file-remark-field"><span>资料备注</span><input id="studentFileRemark" placeholder="如身份证、毕业证、报名资料"></label>
+          <button class="btn secondary" type="button" id="uploadStudentFileBtn"><i class="fas fa-upload"></i> 上传资料</button>
+        </div>
+        <div class="file-help" id="studentFileHelp">新建学员需先保存后再上传资料。</div>
+        <div class="student-file-list" id="studentFileList"></div>
       </div>
       <div class="form-section">
         <h3>费用与备注</h3>
