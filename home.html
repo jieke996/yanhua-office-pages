@@ -600,16 +600,28 @@
     <script>
         const API_BASE = window.YANHUA_API_BASE || (location.protocol === 'file:' ? 'http://localhost:8080' : '');
         const DEFAULT_SETTINGS = { brandName: '言华教育' };
-        const LOCAL_TOOL_ENTRY = {
-            id: 'local-tongliao-public-institution-jobs',
-            name: '通辽市事业单位岗位查询',
-            icon: 'building',
-            url: 'tools/tongliao-public-institution-jobs/index.html',
-            openMode: 'iframe',
-            visible: true,
-            order: 0,
-            children: []
-        };
+        const LOCAL_TOOL_ENTRIES = [
+            {
+                id: 'local-tongliao-soe-jobs',
+                name: '通辽央国企招录岗位查询',
+                icon: 'business',
+                url: 'tools/tongliao-soe-jobs/index.html',
+                openMode: 'iframe',
+                visible: true,
+                insertBefore: '内蒙古事业单位岗位查询',
+                children: []
+            },
+            {
+                id: 'local-tongliao-public-institution-jobs',
+                name: '通辽市事业单位岗位查询',
+                icon: 'building',
+                url: 'tools/tongliao-public-institution-jobs/index.html',
+                openMode: 'iframe',
+                visible: true,
+                insertAfter: '内蒙古公务员岗位查询',
+                children: []
+            }
+        ];
         let currentUser=null, tools=[], recruitmentJobs=[], invitations=[], todos=[], currentTool=null, expandedTools=new Set(), searchEngine='baidu';
         let appSettings = { ...DEFAULT_SETTINGS };
         const engineUrls = { baidu:'https://www.baidu.com/s?wd=', bing:'https://www.bing.com/search?q=', google:'https://www.google.com/search?q=' };
@@ -664,13 +676,23 @@
                 ...tool,
                 children:Array.isArray(tool.children)?tool.children:[]
             }));
-            const exists=next.some(tool=>tool.name===LOCAL_TOOL_ENTRY.name||tool.url===LOCAL_TOOL_ENTRY.url
-                ||(tool.children||[]).some(child=>child.name===LOCAL_TOOL_ENTRY.name||child.url===LOCAL_TOOL_ENTRY.url));
-            if(exists) return next;
-            const insertIndex=next.findIndex(tool=>tool.name&&tool.name.includes('内蒙古公务员岗位查询'));
-            const localTool={...LOCAL_TOOL_ENTRY, children:[]};
-            if(insertIndex>=0) next.splice(insertIndex+1,0,localTool);
-            else next.push(localTool);
+            LOCAL_TOOL_ENTRIES.forEach(entry=>{
+                const exists=next.some(tool=>tool.name===entry.name||tool.url===entry.url
+                    ||(tool.children||[]).some(child=>child.name===entry.name||child.url===entry.url));
+                if(exists) return;
+                const localTool={...entry, children:[]};
+                delete localTool.insertBefore;
+                delete localTool.insertAfter;
+                const beforeIndex=entry.insertBefore
+                    ? next.findIndex(tool=>tool.name&&tool.name.includes(entry.insertBefore))
+                    : -1;
+                if(beforeIndex>=0){next.splice(beforeIndex,0,localTool);return;}
+                const afterIndex=entry.insertAfter
+                    ? next.findIndex(tool=>tool.name&&tool.name.includes(entry.insertAfter))
+                    : -1;
+                if(afterIndex>=0) next.splice(afterIndex+1,0,localTool);
+                else next.push(localTool);
+            });
             return next;
         }
 
