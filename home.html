@@ -608,7 +608,17 @@
                 url: 'tools/tongliao-soe-jobs/index.html',
                 openMode: 'iframe',
                 visible: true,
-                insertBefore: '内蒙古事业单位岗位查询',
+                insertBefore: '2026内蒙古事业单位',
+                children: []
+            },
+            {
+                id: 'local-public-institution-jobs-2027',
+                name: '2027年内蒙古事业单位',
+                icon: 'building',
+                url: 'tools/public-institution-jobs-2027/index.html',
+                openMode: 'iframe',
+                visible: true,
+                insertBefore: '2026内蒙古事业单位',
                 children: []
             },
             {
@@ -674,6 +684,7 @@
         function withLocalToolEntry(list){
             const next=(Array.isArray(list)?list:[]).map(tool=>({
                 ...tool,
+                name:tool.name==='内蒙古事业单位岗位查询'?'2026内蒙古事业单位':tool.name,
                 children:Array.isArray(tool.children)?tool.children:[]
             }));
             LOCAL_TOOL_ENTRIES.forEach(entry=>{
