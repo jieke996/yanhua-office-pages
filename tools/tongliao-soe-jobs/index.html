@@ -217,10 +217,12 @@ JOBS.forEach(j => { j.url = safeUrl(j.url); });
     });
   });
   const yearShow = (yMin <= yMax) ? (yMin + '–' + yMax) : '—';
+  // 2026-10-20 应阿龙要求：暂时隐藏「招聘公告」「招聘岗位」两块统计卡，
+  // 只保留 招聘单位 / 招聘人数 / 招录年度。若需恢复，取消下面两行注释即可。
   document.getElementById('heroStats').innerHTML =
-    '<div class="stat"><b>'+srcs+'</b><span>招聘公告</span></div>'+
+    // '<div class="stat"><b>'+srcs+'</b><span>招聘公告</span></div>'+
     '<div class="stat"><b>'+units+'</b><span>招聘单位</span></div>'+
-    '<div class="stat"><b>'+total+'</b><span>招聘岗位</span></div>'+
+    // '<div class="stat"><b>'+total+'</b><span>招聘岗位</span></div>'+
     '<div class="stat"><b>'+peopleShow+'</b><span>招聘人数</span></div>'+
     '<div class="stat"><b>'+yearShow+'</b><span>招录年度</span></div>';
 })();
